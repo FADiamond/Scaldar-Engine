@@ -13,7 +13,10 @@ namespace chessBot
       const string RANDOM_GAME = "r1bqkb1r/pp1n1pp1/4pn2/2Pp2p1/1p1P4/2N1PN2/PP3PPP/R2Q1RK1 w kq - 0 10";
       const string BOTTOM_LEFT_L = "8/8/8/8/8/8/P7/PP6 w - - 0 1";
 
-      board = new Board(BOTTOM_LEFT_L);
+      board = new Board(MIDDLE_GAME);
+
+      MoveGeneration.Init();
+
     }
   }
 }

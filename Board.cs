@@ -30,9 +30,18 @@ namespace chessBot
       { 'k', Piece.BlackKing }
     };
 
+    private ulong getWhitePiecesBitboard() {
+      return bitboards[(byte)CharPieces['P']] | bitboards[(byte)CharPieces['N']] | bitboards[(byte)CharPieces['B']] | bitboards[(byte)CharPieces['R']] | bitboards[(byte)CharPieces['Q']] | bitboards[(byte)CharPieces['K']];
+    }
+
+    private ulong getBlackPiecesBitboard() {
+      return bitboards[(byte)CharPieces['p']] | bitboards[(byte)CharPieces['n']] | bitboards[(byte)CharPieces['b']] | bitboards[(byte)CharPieces['r']] | bitboards[(byte)CharPieces['q']] | bitboards[(byte)CharPieces['k']];
+    }
+
     public Board(string startPos)
     {
       parseFen(startPos);
+      ConsoleBoardUI.generateSingleBitboard(getBlackPiecesBitboard());
     }
 
     public void parseFen(string fen)
@@ -54,7 +63,7 @@ namespace chessBot
     public void parseFenPiecePlacement(string piecePlacement)
     {
       Console.WriteLine(piecePlacement);
-      short squareNbr = 0;
+      byte squareNbr = 0;
       string[] rows = piecePlacement.Split('/');
       for (int i = rows.Length - 1; i >= 0; i--)
       {
@@ -65,7 +74,7 @@ namespace chessBot
           if (squareNbr >= 64) break;
           if (char.IsNumber(squareContent))
           {
-            squareNbr += (short)char.GetNumericValue(squareContent);
+            squareNbr += (byte)char.GetNumericValue(squareContent);
           }
           else if (CharPieces.TryGetValue(squareContent, out Piece piece))
           {
