@@ -38,6 +38,11 @@ namespace chessBot
       return bitboards[(byte)CharPieces['p']] | bitboards[(byte)CharPieces['n']] | bitboards[(byte)CharPieces['b']] | bitboards[(byte)CharPieces['r']] | bitboards[(byte)CharPieces['q']] | bitboards[(byte)CharPieces['k']];
     }
 
+    private ulong getOccupancyBitboard() {
+      return getBlackPiecesBitboard() | getWhitePiecesBitboard();
+    }
+
+
     public Board(string startPos)
     {
       parseFen(startPos);

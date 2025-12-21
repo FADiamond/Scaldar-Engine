@@ -14,7 +14,6 @@ namespace chessBot
       const string BOTTOM_LEFT_L = "8/8/8/8/8/8/P7/PP6 w - - 0 1";
 
       board = new Board(MIDDLE_GAME);
-
       MoveGeneration.Init();
 
     }

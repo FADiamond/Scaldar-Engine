@@ -1,11 +1,11 @@
 namespace chessBot
 {
-  public class Move
+  public readonly struct Move(byte fromSquare, byte toSquare, Piece piece, MoveFlags flags)
   {
-    public readonly byte fromPosition;
-    public readonly byte toPosition;
-    public readonly Piece piece;
-    public readonly MoveFlags flags;
+    public readonly byte fromSquare = fromSquare;
+    public readonly byte toSquare = toSquare;
+    public readonly Piece piece = piece;
+    public readonly MoveFlags flags = flags;
   }
 }
- 
+

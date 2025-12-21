@@ -18,7 +18,6 @@ namespace chessBot
     f6,
     g6,
     h6,
-
   }
 }
  
