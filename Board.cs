@@ -13,6 +13,7 @@ namespace chessBot
   public class Board
   {
     public static SideToMove sideToMove;
+    public static EnPassantSquare enPassantSquare;
     public ulong[] bitboards = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     public static readonly Dictionary<char, Piece> CharPieces = new()
     {
@@ -30,15 +31,18 @@ namespace chessBot
       { 'k', Piece.BlackKing }
     };
 
-    private ulong getWhitePiecesBitboard() {
+    private ulong getWhitePiecesBitboard()
+    {
       return bitboards[(byte)CharPieces['P']] | bitboards[(byte)CharPieces['N']] | bitboards[(byte)CharPieces['B']] | bitboards[(byte)CharPieces['R']] | bitboards[(byte)CharPieces['Q']] | bitboards[(byte)CharPieces['K']];
     }
 
-    private ulong getBlackPiecesBitboard() {
+    private ulong getBlackPiecesBitboard()
+    {
       return bitboards[(byte)CharPieces['p']] | bitboards[(byte)CharPieces['n']] | bitboards[(byte)CharPieces['b']] | bitboards[(byte)CharPieces['r']] | bitboards[(byte)CharPieces['q']] | bitboards[(byte)CharPieces['k']];
     }
 
-    private ulong getOccupancyBitboard() {
+    private ulong getOccupancyBitboard()
+    {
       return getBlackPiecesBitboard() | getWhitePiecesBitboard();
     }
 
@@ -61,7 +65,7 @@ namespace chessBot
 
       parseFenPiecePlacement(piecePlacement);
       sideToMove = colorToMove.Equals('w') ? SideToMove.White : SideToMove.Black;
-
+      enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : throw new ArgumentException("Invalid square");
       ConsoleBoardUI.generateBoard(this);
     }
 

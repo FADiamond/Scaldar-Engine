@@ -4,8 +4,14 @@ namespace chessBot
 {
   public static class BitboardHelper
   {
-    public static ulong getBitboardWithBitAt(byte position) {
-      return 1UL << position;
+    public static ulong getBitboardWithBitAt(byte square)
+    {
+      return 1UL << square;
+    }
+
+    public static ulong coordToBitboard(byte x, byte y)
+    {
+      return 1UL << (8 * x) + y;
     }
 
     public static void setBitAtPosition(this ref ulong bitboard, byte position)
@@ -30,6 +36,13 @@ namespace chessBot
       return count;
     }
 
+    public static byte NumberOfSetBits(ulong bitboard)
+    {
+        bitboard = bitboard - ((bitboard >> 1) & 0x5555555555555555UL);
+        bitboard = (bitboard & 0x3333333333333333UL) + ((bitboard >> 2) & 0x3333333333333333UL);
+        return (byte)(unchecked(((bitboard + (bitboard >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
+    }
+
     public static ulong combineBitboards(ulong[] bitboards)
     {
       ulong fullBitboard = 0;
@@ -40,9 +53,9 @@ namespace chessBot
       return fullBitboard;
     }
 
-    public static ulong North(ulong bitboard) => bitboard << 8;
+    public static ulong North(ulong bitboard, int times = 1) => bitboard << (8 * times);
 
-    public static ulong South(ulong bitboard) => bitboard >> 8;
+    public static ulong South(ulong bitboard, int times = 1) => bitboard >> (8 * times);
 
     public static ulong East(ulong bitboard) => (bitboard & ~Constants.FileH) << 1;
 
