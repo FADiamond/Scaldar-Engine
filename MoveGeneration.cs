@@ -6,13 +6,27 @@ namespace chessBot
 {
   public class MoveGeneration
   {
+    public static List<Move> moves = new();
 
 
-    private static List<Move> moves = new();
+    public static void generateMoves(Board board) {
+      ulong whitePiecesBitboard = board.getWhitePiecesBitboard();
+      ulong blackPiecesBitboard = board.getBlackPiecesBitboard();
+      SideToMove side = board.sideToMove;
 
+      Piece pawn = side.Equals(SideToMove.White) ? Piece.WhitePawn : Piece.BlackPawn;
+      Piece knight = side.Equals(SideToMove.White) ? Piece.WhiteKnight : Piece.BlackKnight;
+      Piece bishop = side.Equals(SideToMove.White) ? Piece.WhiteBishop : Piece.BlackBishop;
+      Piece rook = side.Equals(SideToMove.White) ? Piece.WhiteRook : Piece.BlackRook;
+      Piece queen = side.Equals(SideToMove.White) ? Piece.WhiteQueen : Piece.BlackQueen;
+      Piece king = side.Equals(SideToMove.White) ? Piece.WhiteKing : Piece.BlackKing;
 
+      generatePseudoLegalKnightMoves(board.bitboards[(byte)knight], whitePiecesBitboard, blackPiecesBitboard, side);
+      generatePseudoLegalPawnMoves(board.bitboards[(byte)pawn], whitePiecesBitboard, blackPiecesBitboard, side, board.enPassantSquare);
+      generatePseudoLegalKingMoves(board.bitboards[(byte)king], whitePiecesBitboard, blackPiecesBitboard, side);
+    }
 
-    public void generatePseudoLegalKnightMoves(ulong knightsBitboard, ulong whitePiecesBitboard, ulong blackPiecesBitboard, SideToMove sideToMove)
+    public static void generatePseudoLegalKnightMoves(ulong knightsBitboard, ulong whitePiecesBitboard, ulong blackPiecesBitboard, SideToMove sideToMove)
     {
       ulong opposingPiecesBitboard = blackPiecesBitboard;
       ulong currentPiecesBitboard = whitePiecesBitboard;
@@ -43,11 +57,11 @@ namespace chessBot
       }
     }
 
-    public void generatePseudoLegalPawnMoves(ulong pawnBitboard, ulong whitePiecesBitboard, ulong blackPiecesBitboard, SideToMove sideToMove, EnPassantSquare enPassantSquare)
+    public static void generatePseudoLegalPawnMoves(ulong pawnBitboard, ulong whitePiecesBitboard, ulong blackPiecesBitboard, SideToMove sideToMove, EnPassantSquare? enPassantSquare)
     {
       ulong opposingPiecesBitboard = blackPiecesBitboard;
       ulong currentPiecesBitboard = whitePiecesBitboard;
-      ulong potentialPromotingPieces = Constants.Rank7 & currentPiecesBitboard;
+      ulong potentialPromotingPieces = Constants.Rank7 & pawnBitboard;
       ulong promotionRank = Constants.Rank8;
       Piece currentSidePawn = Piece.WhitePawn;
       if (sideToMove.Equals(SideToMove.Black))
@@ -55,7 +69,7 @@ namespace chessBot
         opposingPiecesBitboard = whitePiecesBitboard;
         currentPiecesBitboard = blackPiecesBitboard;
         currentSidePawn = Piece.BlackPawn;
-        potentialPromotingPieces = Constants.Rank2 & currentPiecesBitboard;
+        potentialPromotingPieces = Constants.Rank2 & pawnBitboard;
         promotionRank = Constants.Rank1;
       }
       currentPiecesBitboard ^= potentialPromotingPieces;
@@ -65,10 +79,12 @@ namespace chessBot
       ulong occupancyBitboard = whitePiecesBitboard | blackPiecesBitboard;
       while (pawnBitboard != 0)
       {
-        byte currentPieceIndex = currentPiecesBitboard.popLSB();
+        byte currentPieceIndex = pawnBitboard.popLSB();
         ulong currentAttacks = Attacks.PawnAttacks[currentSidePawn][currentPieceIndex];
 
-        generatePseudoLegalPawnEnPassantCapture(currentPieceIndex, currentAttacks, currentSidePawn, enPassantSquare);
+        if (enPassantSquare != null) {
+          generatePseudoLegalPawnEnPassantCapture(currentPieceIndex, currentAttacks, currentSidePawn, enPassantSquare);
+        }
 
         ulong attackedSquaresBitboard = currentAttacks & opposingPiecesBitboard;
         while (attackedSquaresBitboard != 0) {
@@ -95,7 +111,7 @@ namespace chessBot
             shiftedSquareBitboard = BitboardHelper.North(doublePushSquareBitboard);
           }
 
-          if ((shiftedSquareBitboard & occupancyBitboard) != 0) {
+          if ((shiftedSquareBitboard & occupancyBitboard) == 0) {
             moves.Add(new Move(currentPieceIndex, doublePushSquareIndex, currentSidePawn, MoveFlags.DoublePush));
           }
         }
@@ -104,8 +120,8 @@ namespace chessBot
 
     }
 
-    private void generatePseudoLegalPawnEnPassantCapture(byte pieceIndex, ulong currentAttacksBitboard, Piece currentSidePawn, EnPassantSquare enPassantSquare) {
-      byte enPassantIndex = (byte)enPassantSquare;
+    private static void generatePseudoLegalPawnEnPassantCapture(byte pieceIndex, ulong currentAttacksBitboard, Piece currentSidePawn, EnPassantSquare? enPassantSquare) {
+      byte enPassantIndex = (byte)enPassantSquare.Value;
       ulong enPassantSquareBitboard = BitboardHelper.getBitboardWithBitAt(enPassantIndex);
       ulong reachedEnPassantSquareBitboard = enPassantSquareBitboard & currentAttacksBitboard;
       if (reachedEnPassantSquareBitboard != 0) {
@@ -113,20 +129,20 @@ namespace chessBot
       }
     }
     
-    private void generatePseudoLegalPawnPromotions(ulong possiblePromotingPawnsBitboard, ulong currentPiecesBitboard, ulong opposingPiecesBitboard, Piece currentSidePawn)
+    private static void generatePseudoLegalPawnPromotions(ulong possiblePromotingPawnsBitboard, ulong currentPiecesBitboard, ulong opposingPiecesBitboard, Piece currentSidePawn)
     {
       while (possiblePromotingPawnsBitboard != 0)
       {
         byte pieceIndex = possiblePromotingPawnsBitboard.popLSB();
 
-        ulong regularMovesPromotions = Attacks.PawnRegularMoves[currentSidePawn][pieceIndex] & (~opposingPiecesBitboard | ~currentPiecesBitboard);
+        ulong regularMovesPromotions = Attacks.PawnRegularMoves[currentSidePawn][pieceIndex] & ~(opposingPiecesBitboard | currentPiecesBitboard);
         while (regularMovesPromotions != 0)
         {
           byte targetPromotionIndex = regularMovesPromotions.popLSB();
           addPromotionMoves(pieceIndex, targetPromotionIndex, currentSidePawn);
         }
 
-        ulong captureMovesPromotions = Attacks.PawnAttacks[currentSidePawn][pieceIndex] & (opposingPiecesBitboard | ~currentPiecesBitboard);
+        ulong captureMovesPromotions = Attacks.PawnAttacks[currentSidePawn][pieceIndex] & opposingPiecesBitboard;
         while (captureMovesPromotions != 0)
         {
           byte targetPromotionIndex = captureMovesPromotions.popLSB();
@@ -136,7 +152,7 @@ namespace chessBot
       }
     }
 
-    private void addPromotionMoves(byte fromSquare, byte toSquare, Piece pawn, MoveFlags extraFlags = MoveFlags.None)
+    private static void addPromotionMoves(byte fromSquare, byte toSquare, Piece pawn, MoveFlags extraFlags = MoveFlags.None)
     {
       moves.Add(new Move(fromSquare, toSquare, pawn, extraFlags | MoveFlags.QueenPromotion));
       moves.Add(new Move(fromSquare, toSquare, pawn, extraFlags | MoveFlags.RookPromotion));
@@ -144,7 +160,39 @@ namespace chessBot
       moves.Add(new Move(fromSquare, toSquare, pawn, extraFlags | MoveFlags.BishopPromotion));
     }
 
+    public static void generatePseudoLegalKingMoves(ulong kingBitboard, ulong whitePiecesBitboard, ulong blackPiecesBitboard, SideToMove sideToMove) {
+      ulong opposingPiecesBitboard = blackPiecesBitboard;
+      ulong currentPiecesBitboard = whitePiecesBitboard;
+      Piece currentSideKing = Piece.WhiteKing;
+      if (sideToMove.Equals(SideToMove.Black))
+      {
+        opposingPiecesBitboard = whitePiecesBitboard;
+        currentPiecesBitboard = blackPiecesBitboard;
+        currentSideKing = Piece.BlackKing;
+      }
 
+      byte pieceIndex = kingBitboard.popLSB();
+      ulong kingAttacks = Attacks.KingAttacks[pieceIndex];
+      
+      kingAttacks ^= currentPiecesBitboard; // Filter out our pieces
+
+      ulong kingCaptures = kingAttacks & opposingPiecesBitboard;
+
+      // Captures
+      while (kingCaptures != 0 ) {
+        byte targetIndex = kingAttacks.popLSB();
+        moves.Add(new Move(pieceIndex, targetIndex, currentSideKing, MoveFlags.Capture));
+      }
+
+      kingAttacks ^= kingCaptures;  // Fitler out Attacks
+
+      // Regular Moves
+      while (kingAttacks != 0 ) {
+        byte targetIndex = kingAttacks.popLSB();
+        moves.Add(new Move(pieceIndex, targetIndex, currentSideKing, MoveFlags.None));
+      }
+
+    }
 
 
   }

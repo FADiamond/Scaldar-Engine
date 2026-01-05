@@ -24,22 +24,21 @@ namespace chessBot
     public static ulong[,] BishopAttacks = new ulong[64, 512];
     public static ulong[,] RookAttacks = new ulong[64, 4096];
 
-    private static readonly int[] horseAttackOffset = { 17, 15, 10, 6, -6, -10, -15, -17 };
-    private static readonly int[] kingAttackOffset = { 1, -1, 8, -8, 9, -9, 7, -7 };
-
     public static void Init()
     {
       initKnightAttacks();
       initPawnAttacks();
+      initKingAttacks();
     }
 
     private static void initKnightAttacks()
     {
+      const byte NBR_POSSIBLE_ATTACKS = 8; 
       for (byte i = 0; i < KnightAttacks.Length; i++)
       {
         ulong currentPosition = BitboardHelper.getBitboardWithBitAt(i);
         ulong attacks = 0UL;
-        for (byte j = 0; j < horseAttackOffset.Length; j++)
+        for (byte j = 0; j < NBR_POSSIBLE_ATTACKS; j++)
         {
           if (((currentPosition >> 17) & ~Constants.FileH) > 0) attacks |= currentPosition >> 17;
           if (((currentPosition >> 15) & ~Constants.FileA) > 0) attacks |= currentPosition >> 15;
@@ -60,7 +59,7 @@ namespace chessBot
       const int POSSIBLE_POSITIONS = 64;
       for (byte i = 0; i < POSSIBLE_POSITIONS; i++)
       {
-        ulong currentPosition = (Constants.Rank1 | Constants.Rank8) & BitboardHelper.getBitboardWithBitAt(i);
+        ulong currentPosition = BitboardHelper.getBitboardWithBitAt(i);
         PawnAttacks[Piece.WhitePawn][i] = BitboardHelper.NorthWest(currentPosition) | BitboardHelper.NorthEast(currentPosition);
         PawnAttacks[Piece.BlackPawn][i] = BitboardHelper.SouthWest(currentPosition) | BitboardHelper.SouthEast(currentPosition);
         PawnRegularMoves[Piece.WhitePawn][i] = BitboardHelper.North(currentPosition);
@@ -71,6 +70,26 @@ namespace chessBot
 
     }
 
+    private static void initKingAttacks() {
+      const byte NBR_POSSIBLE_ATTACKS = 8; 
+      for (byte i = 0; i < KingAttacks.Length; i++) {
+        ulong currentPosition = BitboardHelper.getBitboardWithBitAt(i);
+        ulong attacks = 0UL;
+        for (byte j = 0; j < NBR_POSSIBLE_ATTACKS; j++) {
+          attacks |= BitboardHelper.North(currentPosition);  
+          attacks |= BitboardHelper.South(currentPosition);
+          attacks |= BitboardHelper.East(currentPosition);
+          attacks |= BitboardHelper.West(currentPosition);
+          attacks |= BitboardHelper.NorthEast(currentPosition);
+          attacks |= BitboardHelper.NorthWest(currentPosition);
+          attacks |= BitboardHelper.SouthEast(currentPosition);
+          attacks |= BitboardHelper.SouthWest(currentPosition);
+        }
+        KingAttacks[i] = ~currentPosition & attacks;
+      }
+      
+
+    }
+
   }
 }
-

@@ -12,8 +12,8 @@ namespace chessBot
   // 00 01 02 03 04 05 06 07
   public class Board
   {
-    public static SideToMove sideToMove;
-    public static EnPassantSquare enPassantSquare;
+    public SideToMove sideToMove;
+    public EnPassantSquare? enPassantSquare;
     public ulong[] bitboards = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     public static readonly Dictionary<char, Piece> CharPieces = new()
     {
@@ -31,17 +31,17 @@ namespace chessBot
       { 'k', Piece.BlackKing }
     };
 
-    private ulong getWhitePiecesBitboard()
+    public ulong getWhitePiecesBitboard()
     {
       return bitboards[(byte)CharPieces['P']] | bitboards[(byte)CharPieces['N']] | bitboards[(byte)CharPieces['B']] | bitboards[(byte)CharPieces['R']] | bitboards[(byte)CharPieces['Q']] | bitboards[(byte)CharPieces['K']];
     }
 
-    private ulong getBlackPiecesBitboard()
+    public ulong getBlackPiecesBitboard()
     {
       return bitboards[(byte)CharPieces['p']] | bitboards[(byte)CharPieces['n']] | bitboards[(byte)CharPieces['b']] | bitboards[(byte)CharPieces['r']] | bitboards[(byte)CharPieces['q']] | bitboards[(byte)CharPieces['k']];
     }
 
-    private ulong getOccupancyBitboard()
+    public ulong getOccupancyBitboard()
     {
       return getBlackPiecesBitboard() | getWhitePiecesBitboard();
     }
@@ -51,6 +51,11 @@ namespace chessBot
     {
       parseFen(startPos);
       ConsoleBoardUI.generateSingleBitboard(getBlackPiecesBitboard());
+      MoveGeneration.generateMoves(this);      
+      
+      foreach (Move move in MoveGeneration.moves) {
+        Console.WriteLine($"{move.piece} {move.fromSquare}->{move.toSquare} {move.flags}");
+      }
     }
 
     public void parseFen(string fen)
@@ -64,8 +69,10 @@ namespace chessBot
       string fullmoveNumber = fields[5];
 
       parseFenPiecePlacement(piecePlacement);
-      sideToMove = colorToMove.Equals('w') ? SideToMove.White : SideToMove.Black;
-      enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : throw new ArgumentException("Invalid square");
+      sideToMove = colorToMove.Equals("w") ? SideToMove.White : SideToMove.Black;
+      Console.WriteLine("-" + colorToMove + "-");
+      Console.WriteLine(sideToMove);
+      enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : null;
       ConsoleBoardUI.generateBoard(this);
     }
 
@@ -97,4 +104,3 @@ namespace chessBot
 
   }
 }
-
