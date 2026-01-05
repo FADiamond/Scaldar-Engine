@@ -1,3 +1,5 @@
+using chessBot.ui;
+
 namespace chessBot
 {
   public class Attacks
@@ -33,7 +35,7 @@ namespace chessBot
 
     private static void initKnightAttacks()
     {
-      const byte NBR_POSSIBLE_ATTACKS = 8; 
+      const byte NBR_POSSIBLE_ATTACKS = 8;
       for (byte i = 0; i < KnightAttacks.Length; i++)
       {
         ulong currentPosition = BitboardHelper.getBitboardWithBitAt(i);
@@ -70,13 +72,16 @@ namespace chessBot
 
     }
 
-    private static void initKingAttacks() {
-      const byte NBR_POSSIBLE_ATTACKS = 8; 
-      for (byte i = 0; i < KingAttacks.Length; i++) {
+    private static void initKingAttacks()
+    {
+      const byte NBR_POSSIBLE_ATTACKS = 8;
+      for (byte i = 0; i < KingAttacks.Length; i++)
+      {
         ulong currentPosition = BitboardHelper.getBitboardWithBitAt(i);
         ulong attacks = 0UL;
-        for (byte j = 0; j < NBR_POSSIBLE_ATTACKS; j++) {
-          attacks |= BitboardHelper.North(currentPosition);  
+        for (byte j = 0; j < NBR_POSSIBLE_ATTACKS; j++)
+        {
+          attacks |= BitboardHelper.North(currentPosition);
           attacks |= BitboardHelper.South(currentPosition);
           attacks |= BitboardHelper.East(currentPosition);
           attacks |= BitboardHelper.West(currentPosition);
@@ -87,9 +92,56 @@ namespace chessBot
         }
         KingAttacks[i] = ~currentPosition & attacks;
       }
-      
-
     }
+
+    private static void initRookMask()
+    {
+      for (byte squareNbr = 0; squareNbr < 64; squareNbr++)
+      {
+        ulong attacks = 0UL;
+        int rankNbr = squareNbr / 8;
+        int fileNbr = squareNbr % 8;
+
+        for (int rank = rankNbr + 1; rank <= 6; rank++)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)fileNbr);
+
+        for (int rank = rankNbr - 1; rank >= 1; rank--)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)fileNbr);
+
+        for (int file = fileNbr + 1; file <= 6; file++)
+          attacks |= BitboardHelper.coordToBitboard((byte)rankNbr, (byte)file);
+
+        for (int file = fileNbr - 1; file >= 1; file--)
+          attacks |= BitboardHelper.coordToBitboard((byte)rankNbr, (byte)file);
+
+        RookMask[squareNbr] = attacks;
+      }
+    }
+
+    public static void initBishopMask()
+    {
+      for (byte squareNbr = 0; squareNbr < 64; squareNbr++)
+      {
+        ulong attacks = 0UL;
+        int rankNbr = squareNbr / 8;
+        int fileNbr = squareNbr % 8;
+
+        for (int rank = rankNbr + 1, file = fileNbr + 1; rank <= 6 && file <= 6; rank++, file++)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+
+        for (int rank = rankNbr - 1, file = fileNbr + 1; rank >= 1 && file <= 6; rank--, file++)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+
+        for (int rank = rankNbr - 1, file = fileNbr - 1; rank >= 1 && file >= 1; rank--, file--)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+
+        for (int rank = rankNbr + 1, file = fileNbr - 1; rank <= 6 && file >= 1; rank++, file--)
+          attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+
+        BishopMask[squareNbr] = attacks;
+      }
+    }
+
 
   }
 }
