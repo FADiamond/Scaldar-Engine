@@ -56,7 +56,6 @@ namespace chessBot.ui
 
 
       ulong bitboard = BitboardHelper.combineBitboards(board.bitboards);
-      Console.WriteLine(BitboardHelper.NumberOfSetBits(bitboard));
       string binaryString = "";
       for (int i = 63; i >= 0; i--)
       {

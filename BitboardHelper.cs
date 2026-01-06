@@ -23,9 +23,14 @@ namespace chessBot
     {
       bitboard &= ~(1UL << position);
     }
-    public static bool HasBit(ulong bitboard, int square)
+    public static bool HasActiveBit(ulong bitboard, int square)
     {
       return ((bitboard >> square) & 1UL) != 0;
+    }
+
+    public static bool HasActiveBit(ulong bitboard, int rank, int file)
+    {
+      return ((bitboard >> (rank*8 + file)) & 1UL) != 0;
     }
 
     public static byte popLSB(this ref ulong bitboard)

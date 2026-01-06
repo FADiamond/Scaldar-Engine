@@ -14,7 +14,8 @@ namespace chessBot
       const string BOTTOM_LEFT_L = "8/8/8/8/8/8/P7/PP6 w - - 0 1";
 
       Attacks.Init();
-      board = new Board(EN_PASSANT);
+      board = new Board(startPos);
+      
       // board = new Board(startPos);
 
     }

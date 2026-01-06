@@ -50,12 +50,17 @@ namespace chessBot
     public Board(string startPos)
     {
       parseFen(startPos);
-      ConsoleBoardUI.generateSingleBitboard(getBlackPiecesBitboard());
       MoveGeneration.generateMoves(this);      
       
+      int moveAmount = MoveGeneration.moves.Count;
+      Console.WriteLine(moveAmount.ToString() + " move possible");
+      Console.WriteLine("---- Moves ----");
+      
       foreach (Move move in MoveGeneration.moves) {
-        Console.WriteLine($"{move.piece} {move.fromSquare}->{move.toSquare} {move.flags}");
+        Console.WriteLine(move.piece.ToString() + ": " + move.fromSquare.ToString() + " -> " + move.toSquare.ToString());
       }
+
+
     }
 
     public void parseFen(string fen)
@@ -70,8 +75,6 @@ namespace chessBot
 
       parseFenPiecePlacement(piecePlacement);
       sideToMove = colorToMove.Equals("w") ? SideToMove.White : SideToMove.Black;
-      Console.WriteLine("-" + colorToMove + "-");
-      Console.WriteLine(sideToMove);
       enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : null;
       ConsoleBoardUI.generateBoard(this);
     }

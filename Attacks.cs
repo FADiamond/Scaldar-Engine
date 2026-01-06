@@ -31,6 +31,9 @@ namespace chessBot
       initKnightAttacks();
       initPawnAttacks();
       initKingAttacks();
+      initRookAttacks();
+      initBishopAttacks();
+
     }
 
     private static void initKnightAttacks()
@@ -94,7 +97,7 @@ namespace chessBot
       }
     }
 
-    private static void initRookMask()
+    public static void initRookMask()
     {
       for (byte squareNbr = 0; squareNbr < 64; squareNbr++)
       {
@@ -141,6 +144,158 @@ namespace chessBot
         BishopMask[squareNbr] = attacks;
       }
     }
+
+    public static void initRookAttacks()
+    {
+      initRookMask();
+      for (byte squareNbr = 0; squareNbr < 64; squareNbr++)
+      {
+        ulong mask = RookMask[squareNbr];
+        int bitsInMask = Constants.RookRelevantBits[squareNbr];
+        int occupanciesVariationAmounts = 1 << Constants.RookRelevantBits[squareNbr];
+
+        for (int variationIndex = 0; variationIndex < occupanciesVariationAmounts; variationIndex++)
+        {
+          ulong occupancy = getMaskOccupancyBitboard(variationIndex, bitsInMask, mask);
+
+          int magicIndex = (int)((occupancy * Constants.RookMagicNumbers[squareNbr]) >> (64 - Constants.RookRelevantBits[squareNbr]));
+
+          RookAttacks[squareNbr, magicIndex] = generateRookPossibleMoves(squareNbr, occupancy);
+        }
+      }
+    }
+
+    public static void initBishopAttacks()
+    {
+      initBishopMask();
+      for (byte squareNbr = 0; squareNbr < 64; squareNbr++)
+      {
+        ulong mask = BishopMask[squareNbr];
+        int bitsInMask = Constants.BishopRelevantBits[squareNbr];
+        int occupanciesVariationAmounts = 1 << Constants.BishopRelevantBits[squareNbr];
+
+        for (int variationIndex = 0; variationIndex < occupanciesVariationAmounts; variationIndex++)
+        {
+          ulong occupancy = getMaskOccupancyBitboard(variationIndex, bitsInMask, mask);
+
+          int magicIndex = (int)((occupancy * Constants.BishopMagicNumbers[squareNbr]) >> (64 - Constants.BishopRelevantBits[squareNbr]));
+
+          BishopAttacks[squareNbr, magicIndex] = generateBishopPossibleMoves(squareNbr, occupancy);
+        }
+
+      }
+    }
+
+    public static ulong generateRookPossibleMoves(byte squareNbr, ulong occupancyMask)
+    {
+      ulong attacks = 0UL;
+      int rankNbr = squareNbr / 8;
+      int fileNbr = squareNbr % 8;
+
+      for (int rank = rankNbr + 1; rank <= 7; rank++)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)fileNbr);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, fileNbr))
+        {
+          break;
+        }
+      }
+
+      for (int rank = rankNbr - 1; rank >= 0; rank--)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)fileNbr);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, fileNbr))
+        {
+          break;
+        }
+      }
+
+      for (int file = fileNbr + 1; file <= 7; file++)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rankNbr, (byte)file);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rankNbr, file))
+        {
+          break;
+        }
+      }
+
+      for (int file = fileNbr - 1; file >= 0; file--)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rankNbr, (byte)file);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rankNbr, file))
+        {
+          break;
+        }
+      }
+
+      return attacks;
+    }
+
+    public static ulong generateBishopPossibleMoves(byte squareNbr, ulong occupancyMask)
+    {
+      ulong attacks = 0UL;
+      int rankNbr = squareNbr / 8;
+      int fileNbr = squareNbr % 8;
+
+      for (int rank = rankNbr + 1, file = fileNbr + 1; rank <= 7 && file <= 7; rank++, file++)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, file))
+        {
+          break;
+        }
+      }
+
+      for (int rank = rankNbr - 1, file = fileNbr + 1; rank >= 0 && file <= 7; rank--, file++)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, file))
+        {
+          break;
+        }
+      }
+
+      for (int rank = rankNbr - 1, file = fileNbr - 1; rank >= 0 && file >= 0; rank--, file--)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, file))
+        {
+          break;
+        }
+      }
+
+      for (int rank = rankNbr + 1, file = fileNbr - 1; rank <= 7 && file >= 0; rank++, file--)
+      {
+        attacks |= BitboardHelper.coordToBitboard((byte)rank, (byte)file);
+        if (BitboardHelper.HasActiveBit(occupancyMask, rank, file))
+        {
+          break;
+        }
+      }
+
+      return attacks;
+
+    }
+
+    public static ulong getMaskOccupancyBitboard(int index, int maskBitsAmount, ulong mask)
+    {
+      ulong occupancies = 0UL;
+
+      for (int count = 0; count < maskBitsAmount; count++)
+      {
+        byte squareIndex = mask.popLSB();
+
+        if ((index & (1 << count)) > 0)
+        {
+          occupancies.setBitAtPosition(squareIndex);
+        }
+      }
+
+      return occupancies;
+
+    }
+
 
 
   }
