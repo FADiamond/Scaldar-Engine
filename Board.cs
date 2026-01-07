@@ -57,15 +57,20 @@ namespace chessBot
     {
       parseFen(startPos);
       MoveGeneration.generateMoves(this);      
-      
-      ConsoleBoardUI.generateBoard(this);
-      int moveAmount = MoveGeneration.moves.Count;
-      Console.WriteLine(moveAmount.ToString() + " move possible");
-      Console.WriteLine("---- Moves ----");
-      
-      foreach (Move move in MoveGeneration.moves) {
-        Console.WriteLine("From: " + move.fromSquare + " To: " + move.toSquare + " Piece: " + move.piece + " Flags: " + move.flags);
-      }
+      List<Move> moves = MoveGeneration.moves;
+      ConsoleBoardUI.showBoardState(this, moves);
+    }
+
+    public Board(Board board) {
+      sideToMove = board.sideToMove;
+      whiteCanCastleKingSide = board.whiteCanCastleKingSide;
+      whiteCanCastleQueenSide = board.whiteCanCastleQueenSide;
+      blackCanCastleKingSide = board.blackCanCastleKingSide;
+      blackCanCastleQueenSide = board.blackCanCastleQueenSide;
+      halfwayMoveClock = board.halfwayMoveClock;
+      fullMoveClock = board.fullMoveClock;
+      enPassantSquare = board.enPassantSquare;
+      bitboards = board.bitboards; 
     }
 
     public void parseFen(string fen)

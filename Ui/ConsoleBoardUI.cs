@@ -11,6 +11,18 @@ namespace chessBot.ui
 
     public ConsoleBoardUI() { }
 
+    public static void showBoardState(Board board, List<Move> moves) {
+
+      generateBoard(board);
+      int moveAmount = moves.Count;
+      Console.WriteLine(moveAmount.ToString() + " move possible");
+      Console.WriteLine("---- Moves ----");
+      
+      foreach (Move move in MoveGeneration.moves) {
+        Console.WriteLine("From: " + move.fromSquare + " To: " + move.toSquare + " Piece: " + move.piece + " Flags: " + move.flags);
+      }
+    }
+
     public static void generateSingleBitboard(ulong bitboard)
     {
       string binaryString = "";
