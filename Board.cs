@@ -13,6 +13,12 @@ namespace chessBot
   public class Board
   {
     public SideToMove sideToMove;
+    public bool whiteCanCastleKingSide;
+    public bool whiteCanCastleQueenSide;
+    public bool blackCanCastleKingSide;
+    public bool blackCanCastleQueenSide;
+    public byte halfwayMoveClock;
+    public short fullMoveClock;
     public EnPassantSquare? enPassantSquare;
     public ulong[] bitboards = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
     public static readonly Dictionary<char, Piece> CharPieces = new()
@@ -52,15 +58,14 @@ namespace chessBot
       parseFen(startPos);
       MoveGeneration.generateMoves(this);      
       
+      ConsoleBoardUI.generateBoard(this);
       int moveAmount = MoveGeneration.moves.Count;
       Console.WriteLine(moveAmount.ToString() + " move possible");
       Console.WriteLine("---- Moves ----");
       
       foreach (Move move in MoveGeneration.moves) {
-        Console.WriteLine(move.piece.ToString() + ": " + move.fromSquare.ToString() + " -> " + move.toSquare.ToString());
+        Console.WriteLine("From: " + move.fromSquare + " To: " + move.toSquare + " Piece: " + move.piece + " Flags: " + move.flags);
       }
-
-
     }
 
     public void parseFen(string fen)
@@ -75,8 +80,14 @@ namespace chessBot
 
       parseFenPiecePlacement(piecePlacement);
       sideToMove = colorToMove.Equals("w") ? SideToMove.White : SideToMove.Black;
+      whiteCanCastleKingSide = castlingAvailability.Contains('K');
+      whiteCanCastleQueenSide = castlingAvailability.Contains('Q');
+      blackCanCastleKingSide = castlingAvailability.Contains('k');
+      blackCanCastleQueenSide = castlingAvailability.Contains('q');
       enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : null;
-      ConsoleBoardUI.generateBoard(this);
+      halfwayMoveClock = byte.Parse(halfmoveClock);
+      fullMoveClock = short.Parse(fullmoveNumber);
+
     }
 
     public void parseFenPiecePlacement(string piecePlacement)

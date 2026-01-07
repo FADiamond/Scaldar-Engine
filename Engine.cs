@@ -12,9 +12,10 @@ namespace chessBot
       const string EN_PASSANT = "rnbqkbnr/pppp2pp/5p2/3Pp3/8/8/PPP1PPPP/RNBQKBNR w KQkq e6 0 3";
       const string RANDOM_GAME = "r1bqkb1r/pp1n1pp1/4pn2/2Pp2p1/1p1P4/2N1PN2/PP3PPP/R2Q1RK1 w kq - 0 10";
       const string BOTTOM_LEFT_L = "8/8/8/8/8/8/P7/PP6 w - - 0 1";
+      const string KIWIPETE = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 5 10";
 
       Attacks.Init();
-      board = new Board(startPos);
+      board = new Board(KIWIPETE);
       
       // board = new Board(startPos);
 
