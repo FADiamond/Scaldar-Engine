@@ -165,6 +165,15 @@ namespace chessBot
       }
     }
 
+    public static ulong getRookAttacks(ulong currentPiecesBitboard, ulong opposingPiecesBitboard, byte pieceIndex)
+    {
+      ulong occupancy = (opposingPiecesBitboard | currentPiecesBitboard) & RookMask[pieceIndex];
+      int magicIndex = (int)((occupancy * Constants.RookMagicNumbers[pieceIndex]) >> (64 - Constants.RookRelevantBits[pieceIndex]));
+
+      return RookAttacks[pieceIndex, magicIndex];
+    }
+
+
     public static void initBishopAttacks()
     {
       initBishopMask();
@@ -184,6 +193,14 @@ namespace chessBot
         }
 
       }
+    }
+
+    public static ulong getBishopAttacks(ulong currentPiecesBitboard, ulong opposingPiecesBitboard, byte pieceIndex)
+    {
+      ulong occupancy = (opposingPiecesBitboard | currentPiecesBitboard) & BishopMask[pieceIndex];
+      int magicIndex = (int)((occupancy * Constants.BishopMagicNumbers[pieceIndex]) >> (64 - Constants.BishopRelevantBits[pieceIndex]));
+
+      return BishopAttacks[pieceIndex, magicIndex];
     }
 
     public static ulong generateRookPossibleMoves(byte squareNbr, ulong occupancyMask)

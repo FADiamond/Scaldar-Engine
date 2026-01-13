@@ -1,6 +1,6 @@
 namespace chessBot
 {
-  public enum SideToMove
+  public enum Side
   {
     White,
     Black
