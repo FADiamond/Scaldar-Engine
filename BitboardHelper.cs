@@ -8,6 +8,14 @@ namespace chessBot
     {
       return 1UL << square;
     }
+    public static ulong getBitboardWithBitsAt(byte[] squares)
+    {
+      ulong result = 0UL;
+      foreach (byte square in squares) {
+        result |= 1UL << square;
+      }
+      return result;
+    }
 
     public static ulong coordToBitboard(byte x, byte y)
     {

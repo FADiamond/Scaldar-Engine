@@ -18,7 +18,7 @@ namespace chessBot.ui
       Console.WriteLine(moveAmount.ToString() + " move possible");
       Console.WriteLine("---- Moves ----");
       
-      foreach (Move move in MoveGeneration.moves) {
+      foreach (Move move in moves) {
         Console.WriteLine("From: " + move.fromSquare + " To: " + move.toSquare + " Piece: " + move.piece + " Flags: " + move.flags);
       }
     }

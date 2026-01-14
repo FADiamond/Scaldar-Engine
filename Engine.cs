@@ -1,3 +1,5 @@
+using chessBot.ui;
+
 namespace chessBot
 {
   public class Engine
@@ -15,7 +17,15 @@ namespace chessBot
       const string KIWIPETE = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 5 10";
 
       Attacks.Init();
-      board = new Board(KIWIPETE);
+      string customPos = "r1bqkbnr/pppppppp/n7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2";
+      // board = new Board(startPos);
+      board = new Board(customPos);
+
+      List<Move> moves = MoveGeneration.generateMoves(board);
+
+      // ConsoleBoardUI.showBoardState(board, moves);
+      Perft.RunPerft(board, 4);
+      Perft.Divide(board, 2);
       
       // board = new Board(startPos);
 
