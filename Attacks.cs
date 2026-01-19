@@ -165,10 +165,10 @@ namespace chessBot
       }
     }
 
-    public static ulong getRookAttacks(ulong currentPiecesBitboard, ulong opposingPiecesBitboard, byte pieceIndex)
+    public static ulong getRookAttacks(ulong occupancy, byte pieceIndex)
     {
-      ulong occupancy = (opposingPiecesBitboard | currentPiecesBitboard) & RookMask[pieceIndex];
-      int magicIndex = (int)((occupancy * Constants.RookMagicNumbers[pieceIndex]) >> (64 - Constants.RookRelevantBits[pieceIndex]));
+      ulong blockers = occupancy & RookMask[pieceIndex];
+      int magicIndex = (int)((blockers * Constants.RookMagicNumbers[pieceIndex]) >> (64 - Constants.RookRelevantBits[pieceIndex]));
 
       return RookAttacks[pieceIndex, magicIndex];
     }
@@ -195,10 +195,10 @@ namespace chessBot
       }
     }
 
-    public static ulong getBishopAttacks(ulong currentPiecesBitboard, ulong opposingPiecesBitboard, byte pieceIndex)
+    public static ulong getBishopAttacks(ulong occupancy, byte pieceIndex)
     {
-      ulong occupancy = (opposingPiecesBitboard | currentPiecesBitboard) & BishopMask[pieceIndex];
-      int magicIndex = (int)((occupancy * Constants.BishopMagicNumbers[pieceIndex]) >> (64 - Constants.BishopRelevantBits[pieceIndex]));
+      ulong blockers = occupancy & BishopMask[pieceIndex];
+      int magicIndex = (int)((blockers * Constants.BishopMagicNumbers[pieceIndex]) >> (64 - Constants.BishopRelevantBits[pieceIndex]));
 
       return BishopAttacks[pieceIndex, magicIndex];
     }
@@ -293,6 +293,11 @@ namespace chessBot
 
       return attacks;
 
+    }
+
+    public static ulong getQueenAttacks(ulong occupancy, byte pieceIndex)
+    {
+        return getBishopAttacks(occupancy, pieceIndex) | getRookAttacks(occupancy, pieceIndex);
     }
 
     public static ulong getMaskOccupancyBitboard(int index, int maskBitsAmount, ulong mask)

@@ -49,6 +49,10 @@ namespace chessBot
       return count;
     }
 
+    public static byte getLSBIndex(this ref ulong bitboard) {
+      return (byte)BitOperations.TrailingZeroCount(bitboard);
+    }
+
     public static byte NumberOfSetBits(ulong bitboard)
     {
         bitboard = bitboard - ((bitboard >> 1) & 0x5555555555555555UL);

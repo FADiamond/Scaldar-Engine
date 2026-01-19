@@ -16,7 +16,8 @@ namespace chessBot
       foreach (Move move in moves)
       {
         Board nextBoard = board.copy();
-        nextBoard.makeMove(move);
+        bool result = nextBoard.makeMove(move);
+        if (result == false) continue;
         if (!nextBoard.isInCheck())
         {
           perftStatus += PerftTest(nextBoard, depth - 1);
@@ -51,8 +52,10 @@ namespace chessBot
       foreach (Move move in moves)
       {
         Board next = board.copy();
-        next.makeMove(move);
-
+        bool result = next.makeMove(move);
+        if (result == false) {
+          continue;
+        }
         if (next.isInCheck()) continue;
 
         PerftStatus child = PerftTest(next, depth - 1);
@@ -65,7 +68,7 @@ namespace chessBot
     }
 
 
-    public static void RunPerft(Board board, int maxDepth)
+    public static void Run(Board board, int maxDepth)
     {
       for (int depth = 1; depth <= maxDepth; depth++)
       {

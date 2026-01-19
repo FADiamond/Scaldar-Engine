@@ -17,15 +17,15 @@ namespace chessBot
       const string KIWIPETE = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 5 10";
 
       Attacks.Init();
-      string customPos = "r1bqkbnr/pppppppp/n7/8/4P3/8/PPPP1PPP/RNBQKBNR w KQkq - 1 2";
-      // board = new Board(startPos);
+      string customPos = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
       board = new Board(customPos);
+      // board = new Board(customPos);
 
       List<Move> moves = MoveGeneration.generateMoves(board);
 
       // ConsoleBoardUI.showBoardState(board, moves);
-      Perft.RunPerft(board, 4);
-      Perft.Divide(board, 2);
+      Perft.Run(board, 5);
+      // Perft.Divide(board, 1);
       
       // board = new Board(startPos);
 

@@ -83,9 +83,10 @@ namespace chessBot
         currentSidePawn = Piece.BlackPawn;
         potentialPromotingPieces = Constants.Rank2 & pawnBitboard;
       }
-      currentPiecesBitboard ^= potentialPromotingPieces;
+
       moves.AddRange(generatePseudoLegalPawnPromotions(potentialPromotingPieces, currentPiecesBitboard, opposingPiecesBitboard, currentSidePawn, opposingKingBitboard));
 
+      pawnBitboard &= ~potentialPromotingPieces;
 
       ulong occupancyBitboard = whitePiecesBitboard | blackPiecesBitboard;
       while (pawnBitboard != 0)
@@ -202,13 +203,17 @@ namespace chessBot
         currentSideKing = Piece.BlackKing;
       }
 
-      byte pieceIndex = kingBitboard.popLSB();
+      byte pieceIndex = kingBitboard.getLSBIndex();
       ulong kingAttacks = Attacks.KingAttacks[pieceIndex];
-
 
       kingAttacks &= ~currentPiecesBitboard;
 
+
       ulong kingCaptures = kingAttacks & opposingPiecesBitboard & ~opposingKingBitboard;
+      ulong kingCapturesMask = kingCaptures; // save before popLSB destroys it
+
+      // iterate kingCaptures (mutates it to 0)
+      kingAttacks ^= kingCapturesMask; // now it actually removes capture squares
 
       // Captures
       while (kingCaptures != 0)
@@ -216,8 +221,6 @@ namespace chessBot
         byte targetIndex = kingCaptures.popLSB();
         moves.Add(new Move(pieceIndex, targetIndex, currentSideKing, MoveFlags.Capture));
       }
-
-      kingAttacks ^= kingCaptures;  // Fitler out Attacks
 
       // Regular Moves
       while (kingAttacks != 0)
@@ -238,26 +241,34 @@ namespace chessBot
       Piece king = Piece.WhiteKing;
       byte[] queenSideRaySquares = [1, 2, 3];
       byte[] kingSideRaySquares = [5, 6];
+      byte[] queenSideSafeSquares = [2, 3];
+      byte[] kingSideSafeSquares = [5, 6];
       if (sideToMove.Equals(Side.Black))
       {
         king = Piece.BlackKing;
         queenSideRaySquares = [57, 58, 59];
         kingSideRaySquares = [61, 62];
+        queenSideSafeSquares = [58, 59];
+        kingSideSafeSquares = [61, 62];
       }
+
+      occupancyBitboard.clearBitAtPosition(kingPosition);
 
       ulong queenSideOccupancy = BitboardHelper.getBitboardWithBitsAt(queenSideRaySquares) | kingBitboard;
       ulong kingSideOccupancy = BitboardHelper.getBitboardWithBitsAt(kingSideRaySquares) | kingBitboard;
 
       bool isQueenSideIncheck = board.isInCheck(sideToMove);
-      foreach (byte square in queenSideRaySquares) {
-        isQueenSideIncheck = isQueenSideIncheck && board.isInCheck(sideToMove, square);
+      foreach (byte square in queenSideSafeSquares)
+      {
+        isQueenSideIncheck = isQueenSideIncheck || board.isAttacked(sideToMove, square);
       }
 
       bool isKingSideInCheck = board.isInCheck(sideToMove);
-      foreach (byte square in kingSideRaySquares) {
-        isKingSideInCheck = isKingSideInCheck && board.isInCheck(sideToMove, square);
+      foreach (byte square in kingSideSafeSquares)
+      {
+        isKingSideInCheck = isKingSideInCheck || board.isAttacked(sideToMove, square);
       }
-      
+
       if (canCastleQueenSide && (occupancyBitboard & queenSideOccupancy) == 0 && !isQueenSideIncheck)
       {
         moves.Add(new Move(kingPosition, (byte)(kingPosition - 2), king, MoveFlags.CastleQueenSide));
@@ -281,11 +292,14 @@ namespace chessBot
         currentPiecesBitboard = blackPiecesBitboard;
         currentSideRook = Piece.BlackRook;
       }
+
+      ulong occupancy = currentPiecesBitboard | opposingPiecesBitboard;
+
       while (rooksBitboard != 0)
       {
         byte pieceIndex = rooksBitboard.popLSB();
 
-        ulong attacks = Attacks.getRookAttacks(currentPiecesBitboard, opposingPiecesBitboard, pieceIndex);
+        ulong attacks = Attacks.getRookAttacks(occupancy, pieceIndex);
 
         moves.AddRange(addPseudoLegalMovesFromAttackTable(attacks, currentPiecesBitboard, opposingPiecesBitboard, pieceIndex, currentSideRook, opposingKingBitboard));
       }
@@ -304,11 +318,14 @@ namespace chessBot
         currentPiecesBitboard = blackPiecesBitboard;
         currentSideBishop = Piece.BlackBishop;
       }
+
+      ulong occupancy = currentPiecesBitboard | opposingPiecesBitboard;
+
       while (bishopsBitboard != 0)
       {
         byte pieceIndex = bishopsBitboard.popLSB();
 
-        ulong attacks = Attacks.getBishopAttacks(currentPiecesBitboard, opposingPiecesBitboard, pieceIndex);
+        ulong attacks = Attacks.getBishopAttacks(occupancy, pieceIndex);
 
         moves.AddRange(addPseudoLegalMovesFromAttackTable(attacks, currentPiecesBitboard, opposingPiecesBitboard, pieceIndex, currentSideBishop, opposingKingBitboard));
       }
@@ -327,11 +344,14 @@ namespace chessBot
         currentPiecesBitboard = blackPiecesBitboard;
         currentSidequeen = Piece.BlackQueen;
       }
+
+      ulong occupancy = currentPiecesBitboard | opposingPiecesBitboard;
+
       while (queensBitboard != 0)
       {
         byte pieceIndex = queensBitboard.popLSB();
 
-        ulong attacks = Attacks.getBishopAttacks(currentPiecesBitboard, opposingPiecesBitboard, pieceIndex) | Attacks.getRookAttacks(currentPiecesBitboard, opposingPiecesBitboard, pieceIndex);
+        ulong attacks = Attacks.getQueenAttacks(occupancy, pieceIndex);
 
         moves.AddRange(addPseudoLegalMovesFromAttackTable(attacks, currentPiecesBitboard, opposingPiecesBitboard, pieceIndex, currentSidequeen, opposingKingBitboard));
       }

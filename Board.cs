@@ -17,7 +17,7 @@ namespace chessBot
     public bool whiteCanCastleQueenSide;
     public bool blackCanCastleKingSide;
     public bool blackCanCastleQueenSide;
-    public byte halfwayMoveClock;
+    public byte halfMoveClock;
     public short fullMoveClock;
     public EnPassantSquare? enPassantSquare;
     public ulong[] bitboards = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -52,22 +52,23 @@ namespace chessBot
       board.whiteCanCastleQueenSide = whiteCanCastleQueenSide;
       board.blackCanCastleKingSide = blackCanCastleKingSide;
       board.blackCanCastleQueenSide = blackCanCastleQueenSide;
-      board.halfwayMoveClock = halfwayMoveClock;
+      board.halfMoveClock = halfMoveClock;
       board.fullMoveClock = fullMoveClock;
       board.enPassantSquare = enPassantSquare;
       board.bitboards = (ulong[])bitboards.Clone();
       return board;
     }
 
-    public bool isInCheck(Side? side = null, byte? square = null)
+    public bool isAttacked(Side? side = null, byte? square = null)
     {
       Side? previousSide = side;
-      if (side == null) {
+      if (side == null)
+      {
         // Check the previous side if not specified
         previousSide = sideToMove.Equals(Side.White) ? Side.Black : Side.White;
       }
-      Piece pawn = Piece.BlackPawn;
-      Piece currentKing = Piece.WhiteKing;
+
+      Piece pawn = Piece.WhitePawn;
 
       ulong pawnBoard = bitboards[(byte)Piece.BlackPawn];
       ulong knightBoard = bitboards[(byte)Piece.BlackKnight];
@@ -78,10 +79,10 @@ namespace chessBot
 
       ulong currentPiecesBitboard = getWhitePiecesBitboard();
       ulong opponentPiecesBitboard = getBlackPiecesBitboard();
+
       if (previousSide.Equals(Side.Black))
       {
-        pawn = Piece.WhitePawn;
-        currentKing = Piece.BlackKing;
+        pawn = Piece.BlackPawn;
 
         pawnBoard = bitboards[(byte)Piece.WhitePawn];
         knightBoard = bitboards[(byte)Piece.WhiteKnight];
@@ -94,54 +95,46 @@ namespace chessBot
         opponentPiecesBitboard = getWhitePiecesBitboard();
       }
 
-      ulong attacksBitboard = 0UL;
+      ulong occupancy = currentPiecesBitboard | opponentPiecesBitboard;
 
-      while (pawnBoard != 0)
-      {
-        byte index = pawnBoard.popLSB();
-        attacksBitboard |= Attacks.PawnAttacks[pawn][index];
-      }
 
-      while (knightBoard != 0)
-      {
-        byte index = knightBoard.popLSB();
-        attacksBitboard |= Attacks.KnightAttacks[index];
-      }
+      if ((Attacks.PawnAttacks[pawn][(byte)square] & pawnBoard) != 0) return true;
+      if ((Attacks.KnightAttacks[(byte)square] & knightBoard) != 0) return true;
+      if ((Attacks.getBishopAttacks(occupancy, (byte)square) & bishopBoard) != 0) return true;
+      if ((Attacks.getRookAttacks(occupancy, (byte)square) & rookBoard) != 0) return true;
+      if ((Attacks.getQueenAttacks(occupancy, (byte)square) & queenBoard) != 0) return true;
+      if ((Attacks.KingAttacks[(byte)square] & kingBoard) != 0) return true;
 
-      while (bishopBoard != 0)
-      {
-        byte index = bishopBoard.popLSB();
-        attacksBitboard |= Attacks.getBishopAttacks(currentPiecesBitboard, opponentPiecesBitboard, index);
-      }
-
-      while (rookBoard != 0)
-      {
-        byte index = rookBoard.popLSB();
-        attacksBitboard |= Attacks.getRookAttacks(currentPiecesBitboard, opponentPiecesBitboard, index);
-      }
-
-      while (queenBoard != 0)
-      {
-        byte index = queenBoard.popLSB();
-        attacksBitboard |= Attacks.getBishopAttacks(currentPiecesBitboard, opponentPiecesBitboard, index) | Attacks.getRookAttacks(currentPiecesBitboard, opponentPiecesBitboard, index);
-      }
-
-      while (kingBoard != 0)
-      {
-        byte index = kingBoard.popLSB();
-        attacksBitboard |= Attacks.KingAttacks[index];
-      }
-
-      ulong targetSquare = bitboards[(byte)currentKing];
-      if (square != null) {
-        targetSquare = BitboardHelper.getBitboardWithBitAt((byte)square);
-      }
-      return (attacksBitboard & targetSquare) != 0;
-
+      return false;
     }
 
-    public void makeMove(Move move)
+    public bool isInCheck(Side? side = null)
     {
+      Side? previousSide = side;
+      if (side == null)
+      {
+        previousSide = sideToMove.Equals(Side.White) ? Side.Black : Side.White;
+      }
+
+      byte kingSquare = bitboards[(byte)Piece.WhiteKing].getLSBIndex();
+      if (previousSide.Equals(Side.Black))
+      {
+        kingSquare = bitboards[(byte)Piece.BlackKing].getLSBIndex();
+      }
+
+
+      return isAttacked(side, kingSquare);
+    }
+
+    public bool makeMove(Move move)
+    {
+
+      byte whiteKingPosition = bitboards[(byte)Piece.WhiteKing].getLSBIndex();
+      byte blackKingPosition = bitboards[(byte)Piece.BlackKing].getLSBIndex();
+
+      // Prevent from eating king
+      if (move.toSquare == whiteKingPosition || move.toSquare == blackKingPosition) return false;
+
       updateClocks(move);
 
       enPassantSquare = null;
@@ -161,10 +154,10 @@ namespace chessBot
       }
       else
       {
-        changePiecePosition(move.piece, move.fromSquare, move.toSquare);
 
         if ((move.flags & MoveFlags.EnPassant) != 0)
         {
+          changePiecePosition(move.piece, move.fromSquare, move.toSquare);
           applyEnPassantMoveBitboardUpdate(move);
         }
         else
@@ -172,6 +165,7 @@ namespace chessBot
           if ((move.flags & MoveFlags.Capture) != 0)
             removePieceFromSquare(move.toSquare);
 
+          changePiecePosition(move.piece, move.fromSquare, move.toSquare);
           if ((move.flags & MoveFlags.DoublePush) != 0)
             updateEnPassantSquare(move);
         }
@@ -181,15 +175,17 @@ namespace chessBot
 
       updateCastlingRights(move);
       sideToMove = sideToMove.Equals(Side.White) ? Side.Black : Side.White;
+
+      return true;
     }
 
 
     private void updateClocks(Move move)
     {
-      halfwayMoveClock++;
+      halfMoveClock++;
       if ((move.flags & MoveFlags.Capture) != 0 || move.piece.Equals(Piece.WhitePawn) || move.piece.Equals(Piece.BlackPawn))
       {
-        halfwayMoveClock = 0;
+        halfMoveClock = 0;
       }
       if (move.piece.IsBlack()) fullMoveClock++;
     }
@@ -380,7 +376,7 @@ namespace chessBot
       blackCanCastleKingSide = castlingAvailability.Contains('k');
       blackCanCastleQueenSide = castlingAvailability.Contains('q');
       enPassantSquare = Enum.TryParse<EnPassantSquare>(enPassantTargetSquare, out var result) ? result : null;
-      halfwayMoveClock = byte.Parse(halfmoveClock);
+      halfMoveClock = byte.Parse(halfmoveClock);
       fullMoveClock = short.Parse(fullmoveNumber);
 
     }
@@ -407,6 +403,20 @@ namespace chessBot
             squareNbr++;
           }
         }
+      }
+    }
+
+    public void AssertKingsPresent(string context = "")
+    {
+      ulong wk = bitboards[(byte)Piece.WhiteKing];
+      ulong bk = bitboards[(byte)Piece.BlackKing];
+
+      if (wk == 0UL || bk == 0UL)
+      {
+        ConsoleBoardUI.generateBoard(this);
+        throw new InvalidOperationException(
+            $"KING MISSING ({context}) | WK={wk:X16} BK={bk:X16} | sideToMove={sideToMove}"
+        );
       }
     }
 

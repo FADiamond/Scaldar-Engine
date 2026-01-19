@@ -1,12 +1,12 @@
 namespace chessBot.Test
 {
-  public class PerftStatus(ulong nodes = 0)
+  public class PerftStatus(ulong nodes = 0, ulong captures = 0UL, ulong enPassant = 0UL, ulong castles = 0UL, ulong promotions = 0UL)
   {
     public ulong nodes = nodes;
-    public ulong captures = 0UL;
-    public ulong enPassant = 0UL;
-    public ulong castles = 0UL;
-    public ulong promotions = 0UL;
+    public ulong captures = captures; 
+    public ulong enPassant = enPassant;
+    public ulong castles = castles;
+    public ulong promotions = promotions;
 
     public static PerftStatus operator +(PerftStatus status, PerftStatus other)
     {
