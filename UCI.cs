@@ -2,7 +2,11 @@ namespace chessBot
 {
   public class UCI
   {
-    public static void Run()
+
+    public static readonly string startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+    private Board board = null;
+
+    public void Run()
     {
       while (true)
       {
@@ -29,15 +33,23 @@ namespace chessBot
             Console.WriteLine("readyok");
             break;
           case "ucinewgame":
+            board = new Board(startPos);
             break;
           case "position":
             break;
           case "go":
+            if (parts[1] == "perft") {
+              processPerft();
+            }
             break;
           case "quit":
             return;
         }
       }
+    }
+
+    private void processPerft() {
+
     }
 
   }

@@ -1,4 +1,5 @@
 using chessBot.ui;
+using chessBot.Search;
 
 namespace chessBot
 {
@@ -17,16 +18,14 @@ namespace chessBot
       const string KIWIPETE = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 5 10";
 
       Attacks.Init();
-      string customPos = "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10";
-      board = new Board(customPos);
-      // board = new Board(customPos);
+      string customPos = "rnb1kbnr/ppp2ppp/8/8/3pP3/8/PP2PPPP/RNBQKB1R b KQkq - 0 6";
+      board = new Board(startPos);
 
-      List<Move> moves = MoveGeneration.generateMoves(board);
-
-      // ConsoleBoardUI.showBoardState(board, moves);
-      Perft.Run(board, 5);
+      Move? bestMove = Search.Search.findBestMove(board, 4);
+      Console.WriteLine($"{(Square)bestMove?.fromSquare}{(Square)bestMove?.toSquare}");
+      // Perft.Run(board, 5);
       // Perft.Divide(board, 1);
-      
+
       // board = new Board(startPos);
 
     }

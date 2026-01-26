@@ -55,9 +55,9 @@ namespace chessBot
 
     public static byte NumberOfSetBits(ulong bitboard)
     {
-        bitboard = bitboard - ((bitboard >> 1) & 0x5555555555555555UL);
-        bitboard = (bitboard & 0x3333333333333333UL) + ((bitboard >> 2) & 0x3333333333333333UL);
-        return (byte)(unchecked(((bitboard + (bitboard >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
+      bitboard = bitboard - ((bitboard >> 1) & 0x5555555555555555UL);
+      bitboard = (bitboard & 0x3333333333333333UL) + ((bitboard >> 2) & 0x3333333333333333UL);
+      return (byte)(unchecked(((bitboard + (bitboard >> 4)) & 0xF0F0F0F0F0F0F0FUL) * 0x101010101010101UL) >> 56);
     }
 
     public static ulong combineBitboards(ulong[] bitboards)
