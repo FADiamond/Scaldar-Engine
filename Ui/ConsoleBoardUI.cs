@@ -1,4 +1,4 @@
-namespace chessBot.ui
+namespace ChessBot.ui
 {
   public class ConsoleBoardUI
   {

@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace chessBot.Search
+namespace ChessBot
 {
   public class TimeControl
   {

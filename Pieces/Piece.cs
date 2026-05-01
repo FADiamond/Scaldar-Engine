@@ -1,4 +1,4 @@
-namespace chessBot
+namespace ChessBot
 {
   public enum Piece
   {

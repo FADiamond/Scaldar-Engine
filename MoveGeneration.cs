@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using System.Reflection.Metadata;
-using chessBot.ui;
+using ChessBot.ui;
 
-namespace chessBot
+namespace ChessBot
 {
   public class MoveGeneration
   {

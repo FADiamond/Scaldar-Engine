@@ -1,6 +1,6 @@
 using System.Numerics;
 
-namespace chessBot
+namespace ChessBot
 {
   public static class BitboardHelper
   {

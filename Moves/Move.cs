@@ -1,4 +1,4 @@
-namespace chessBot
+namespace ChessBot
 {
   public readonly struct Move(byte fromSquare, byte toSquare, Piece piece, MoveFlags flags)
   {

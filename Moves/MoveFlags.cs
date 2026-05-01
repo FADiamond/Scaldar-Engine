@@ -1,4 +1,4 @@
-namespace chessBot
+namespace ChessBot
 {
   // Flags added with : MoveFlags flags = MoveFlags.Capture | MoveFlags.QueenPromotion | ...
   // Check if flag is present with : flags & MoveFlags.Capture != 0;

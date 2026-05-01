@@ -1,6 +1,6 @@
 using System;
 
-namespace chessBot
+namespace ChessBot
 {
   public static class MagicGenerator
   {

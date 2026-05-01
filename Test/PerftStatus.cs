@@ -1,4 +1,4 @@
-namespace chessBot.Test
+namespace ChessBot.Test
 {
   public class PerftStatus(ulong nodes = 0, ulong captures = 0UL, ulong enPassant = 0UL, ulong castles = 0UL, ulong promotions = 0UL)
   {

@@ -1,4 +1,4 @@
-namespace chessBot
+namespace ChessBot
 {
   public static class Prng
   {

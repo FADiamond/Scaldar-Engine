@@ -1,7 +1,7 @@
 using System.Diagnostics;
-using chessBot.Test;
+using ChessBot.Test;
 
-namespace chessBot
+namespace ChessBot
 {
   public class Perft
   {

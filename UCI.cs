@@ -1,13 +1,15 @@
-namespace chessBot
+namespace ChessBot
 {
   public class UCI
   {
 
     public static readonly string startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    private Board board = null;
+    private Board board;
 
     public void Run()
     {
+      CancellationTokenSource source = new();
+      CancellationToken token = source.Token;
       while (true)
       {
         string? line = Console.ReadLine();

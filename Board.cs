@@ -1,8 +1,8 @@
-using chessBot.Pieces;
-using chessBot.ui;
+using ChessBot.Pieces;
+using ChessBot.ui;
 
 
-namespace chessBot
+namespace ChessBot
 {
 
   // Bitboarrds format :
@@ -192,7 +192,7 @@ namespace chessBot
       if (move.piece.IsBlack()) fullMoveClock++;
     }
 
-    private static Piece GetPromotedPiece(Move move)
+    private Piece GetPromotedPiece(Move move)
     {
       bool white = move.piece.IsWhite();
       if ((move.flags & MoveFlags.QueenPromotion) != 0) return white ? Piece.WhiteQueen : Piece.BlackQueen;

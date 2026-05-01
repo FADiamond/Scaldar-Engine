@@ -1,6 +1,6 @@
-using chessBot.ui;
+using ChessBot.ui;
 
-namespace chessBot
+namespace ChessBot
 {
   public class Attacks
   {

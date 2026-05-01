@@ -1,4 +1,4 @@
-namespace chessBot.Search
+namespace ChessBot
 {
   public class Evaluation
   {
