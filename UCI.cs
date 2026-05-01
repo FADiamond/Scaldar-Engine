@@ -1,10 +1,11 @@
+using chessBot;
+
 namespace ChessBot
 {
   public class UCI
   {
-
-    public static readonly string startPos = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-    private Board board;
+    private Board? board;
+    private Search? search;
 
     public void Run()
     {
@@ -35,7 +36,7 @@ namespace ChessBot
             Console.WriteLine("readyok");
             break;
           case "ucinewgame":
-            board = new Board(startPos);
+            NewGameReset();
             break;
           case "position":
             break;
@@ -53,6 +54,12 @@ namespace ChessBot
 
     private void processPerft()
     {
+
+    }
+
+    private void NewGameReset() {
+      board = new Board(FenPositions.EnPassant);
+      // TODO : Clear transposition table
 
     }
 

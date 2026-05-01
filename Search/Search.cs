@@ -1,9 +1,11 @@
 namespace ChessBot
 {
-  public static class Search
+  public class Search
   {
+
+
     // Iterative deepening
-    public static Move? findBestMove(Board board, int maxDepth = 4) {
+    public Move? findBestMove(Board board, int maxDepth = 4) {
       Move bestMove = default;
       
       // TimeControl timeControl = new();
@@ -16,20 +18,20 @@ namespace ChessBot
       return bestMove;
     }
 
-    public static Move getNegamaxBestMove(Board board, int depth = 4)
+    public Move getNegamaxBestMove(Board board, int depth = 4)
     {
-      int alpha = int.MinValue;
-      int beta = int.MaxValue;
+      int alpha = int.MinValue/2;
+      int beta = int.MaxValue/2;
 
       List<Move> moves = MoveGeneration.generateMoves(board); ;
       Move bestMove = default;
-      int bestScore = int.MinValue;
+      int bestScore = int.MinValue/2;
       foreach (Move move in moves)
       {
         Board nextBoard = board.copy();
         bool result = nextBoard.makeMove(move);
         if (!result || nextBoard.isInCheck()) continue;
-        int score = negaMax(board, -beta, -alpha, depth - 1);
+        int score = -negaMax(nextBoard, -beta, -alpha, depth - 1);
 
         if (score > bestScore) {
           bestMove = move;
@@ -41,10 +43,10 @@ namespace ChessBot
       return bestMove;
     }
 
-    private static int negaMax(Board board, int alpha, int beta, int depthLeft)
+    private int negaMax(Board board, int alpha, int beta, int depthLeft)
     {
       if (depthLeft == 0) return Quiesce(board, alpha, beta);
-      int best = int.MinValue;
+      int best = int.MinValue/2;
 
       List<Move> moves = MoveGeneration.generateMoves(board); ;
       foreach (Move move in moves)
@@ -52,7 +54,7 @@ namespace ChessBot
         Board nextBoard = board.copy();
         bool result = nextBoard.makeMove(move);
         if (!result || nextBoard.isInCheck()) continue;
-        int score = -negaMax(nextBoard, -alpha, -beta, depthLeft - 1);
+        int score = -negaMax(nextBoard, -beta, -alpha, depthLeft - 1);
 
         if (score > best) best = score;
         if (score > alpha) alpha = score;
@@ -62,9 +64,9 @@ namespace ChessBot
       return alpha;
     }
 
-    private static int Quiesce(Board board, int alpha, int beta)
+    private int Quiesce(Board board, int alpha, int beta)
     {
-      int staticEval = Evaluation.Evaluate(board);
+      int staticEval = Evaluation.EvaluateForSideToMove(board);
 
       if (staticEval >= beta)
         return staticEval;
