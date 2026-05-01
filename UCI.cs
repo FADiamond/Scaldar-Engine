@@ -38,7 +38,8 @@ namespace chessBot
           case "position":
             break;
           case "go":
-            if (parts[1] == "perft") {
+            if (parts[1] == "perft")
+            {
               processPerft();
             }
             break;
@@ -48,10 +49,11 @@ namespace chessBot
       }
     }
 
-    private void processPerft() {
+    private void processPerft()
+    {
 
     }
 
   }
 }
- 
+

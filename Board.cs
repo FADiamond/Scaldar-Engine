@@ -46,16 +46,18 @@ namespace chessBot
 
     public Board copy()
     {
-      Board board = new();
-      board.sideToMove = sideToMove;
-      board.whiteCanCastleKingSide = whiteCanCastleKingSide;
-      board.whiteCanCastleQueenSide = whiteCanCastleQueenSide;
-      board.blackCanCastleKingSide = blackCanCastleKingSide;
-      board.blackCanCastleQueenSide = blackCanCastleQueenSide;
-      board.halfMoveClock = halfMoveClock;
-      board.fullMoveClock = fullMoveClock;
-      board.enPassantSquare = enPassantSquare;
-      board.bitboards = (ulong[])bitboards.Clone();
+      Board board = new()
+      {
+        sideToMove = sideToMove,
+        whiteCanCastleKingSide = whiteCanCastleKingSide,
+        whiteCanCastleQueenSide = whiteCanCastleQueenSide,
+        blackCanCastleKingSide = blackCanCastleKingSide,
+        blackCanCastleQueenSide = blackCanCastleQueenSide,
+        halfMoveClock = halfMoveClock,
+        fullMoveClock = fullMoveClock,
+        enPassantSquare = enPassantSquare,
+        bitboards = (ulong[])bitboards.Clone()
+      };
       return board;
     }
 

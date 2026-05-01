@@ -33,7 +33,6 @@ namespace chessBot
       initKingAttacks();
       initRookAttacks();
       initBishopAttacks();
-
     }
 
     private static void initKnightAttacks()
