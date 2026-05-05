@@ -1,5 +1,3 @@
-using ChessBot.ui;
-
 namespace ChessBot
 {
   public class Engine

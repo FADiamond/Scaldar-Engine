@@ -61,7 +61,7 @@ namespace ChessBot
       return board;
     }
 
-    public bool isAttacked(Side? side = null, byte? square = null)
+    public bool isAttacked(byte square, Side? side = null)
     {
       Side? previousSide = side;
       if (side == null)
@@ -100,12 +100,12 @@ namespace ChessBot
       ulong occupancy = currentPiecesBitboard | opponentPiecesBitboard;
 
 
-      if ((Attacks.PawnAttacks[pawn][(byte)square] & pawnBoard) != 0) return true;
-      if ((Attacks.KnightAttacks[(byte)square] & knightBoard) != 0) return true;
-      if ((Attacks.getBishopAttacks(occupancy, (byte)square) & bishopBoard) != 0) return true;
-      if ((Attacks.getRookAttacks(occupancy, (byte)square) & rookBoard) != 0) return true;
-      if ((Attacks.getQueenAttacks(occupancy, (byte)square) & queenBoard) != 0) return true;
-      if ((Attacks.KingAttacks[(byte)square] & kingBoard) != 0) return true;
+      if ((Attacks.PawnAttacks[pawn][square] & pawnBoard) != 0) return true;
+      if ((Attacks.KnightAttacks[square] & knightBoard) != 0) return true;
+      if ((Attacks.getBishopAttacks(occupancy, square) & bishopBoard) != 0) return true;
+      if ((Attacks.getRookAttacks(occupancy, square) & rookBoard) != 0) return true;
+      if ((Attacks.getQueenAttacks(occupancy, square) & queenBoard) != 0) return true;
+      if ((Attacks.KingAttacks[square] & kingBoard) != 0) return true;
 
       return false;
     }
@@ -125,7 +125,7 @@ namespace ChessBot
       }
 
 
-      return isAttacked(side, kingSquare);
+      return isAttacked(kingSquare, side);
     }
 
     public bool makeMove(Move move)
@@ -343,6 +343,19 @@ namespace ChessBot
         if (move.fromSquare.Equals(63)) blackCanCastleKingSide = false;
         else if (move.fromSquare.Equals(56)) blackCanCastleQueenSide = false;
       }
+    }
+
+    public Piece? getPieceAtSquare(byte square)
+    {
+
+      for (byte i = 0; i < bitboards.Length; i++)
+      {
+        if (BitboardHelper.HasActiveBit(bitboards[i], square))
+        {
+          return (Piece)i;
+        }
+      }
+      return null;
     }
 
     public ulong getWhitePiecesBitboard()

@@ -143,6 +143,9 @@ namespace ChessBot
     private static List<Move> generatePseudoLegalPawnEnPassantCapture(byte pieceIndex, ulong currentAttacksBitboard, Piece currentSidePawn, EnPassantSquare? enPassantSquare, ulong opposingKingBitboard)
     {
       List<Move> moves = [];
+      if (!enPassantSquare.HasValue)
+        return moves;
+
       byte enPassantIndex = (byte)enPassantSquare.Value;
       ulong enPassantSquareBitboard = BitboardHelper.getBitboardWithBitAt(enPassantIndex);
       ulong reachedEnPassantSquareBitboard = enPassantSquareBitboard & currentAttacksBitboard;
@@ -260,13 +263,13 @@ namespace ChessBot
       bool isQueenSideIncheck = board.isInCheck(sideToMove);
       foreach (byte square in queenSideSafeSquares)
       {
-        isQueenSideIncheck = isQueenSideIncheck || board.isAttacked(sideToMove, square);
+        isQueenSideIncheck = isQueenSideIncheck || board.isAttacked(square, sideToMove);
       }
 
       bool isKingSideInCheck = board.isInCheck(sideToMove);
       foreach (byte square in kingSideSafeSquares)
       {
-        isKingSideInCheck = isKingSideInCheck || board.isAttacked(sideToMove, square);
+        isKingSideInCheck = isKingSideInCheck || board.isAttacked(square, sideToMove);
       }
 
       if (canCastleQueenSide && (occupancyBitboard & queenSideOccupancy) == 0 && !isQueenSideIncheck)
