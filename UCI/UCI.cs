@@ -4,6 +4,7 @@ namespace ChessBot
   {
     private Board? board;
     private Search? search;
+    private readonly Dictionary<ulong, int> repetitionCounts = [];
 
     public void Run()
     {
@@ -53,6 +54,9 @@ namespace ChessBot
     private void NewGameReset()
     {
       board = new Board(FenPositions.StartPos);
+      repetitionCounts.Clear();
+      AddPositionToRepetitionCounts(board.zobristKey);
+      search ??= new Search();
       search.ClearTT();
 
     }
@@ -61,6 +65,8 @@ namespace ChessBot
     {
       board ??= new Board(FenPositions.StartPos);
       search ??= new Search();
+      if (repetitionCounts.Count == 0)
+        AddPositionToRepetitionCounts(board.zobristKey);
 
       if (options.perftDepth.HasValue)
       {
@@ -76,7 +82,7 @@ namespace ChessBot
       if (timeBudgetMs.HasValue)
         cts.CancelAfter((int)timeBudgetMs);
 
-      Move move = search.findBestMove(board, options.depth, timerToken);
+      Move move = search.findBestMove(board, options.depth, timerToken, repetitionCounts);
       Console.WriteLine("bestmove " + LongAlgebraicConverter.moveToAlgebraic(move));
     }
 
@@ -155,18 +161,45 @@ namespace ChessBot
     {
       string fen = options.fen ?? FenPositions.StartPos;
       board = new Board(fen);
+      repetitionCounts.Clear();
+      AddPositionToRepetitionCounts(board.zobristKey);
       makeAlgebraicMoves(options.moves);
 
     }
 
     private void makeAlgebraicMoves(List<string> algebraicMoves)
     {
+      if (board == null)
+        return;
+
       foreach (string alebraicMove in algebraicMoves)
       {
         Move? move = LongAlgebraicConverter.algebraicToMove(alebraicMove, board);
         if (move.HasValue)
-          board.makeMove(move.Value);
+        {
+          bool moveWasMade = board.makeMove(move.Value);
+          if (moveWasMade)
+          {
+            if (IsIrreversibleMove(move.Value))
+              repetitionCounts.Clear();
+
+            AddPositionToRepetitionCounts(board.zobristKey);
+          }
+        }
       }
+    }
+
+    private void AddPositionToRepetitionCounts(ulong zobristKey)
+    {
+      repetitionCounts.TryGetValue(zobristKey, out int count);
+      repetitionCounts[zobristKey] = count + 1;
+    }
+
+    private static bool IsIrreversibleMove(Move move)
+    {
+      return (move.flags & MoveFlags.Capture) != 0 ||
+          move.piece == Piece.WhitePawn ||
+          move.piece == Piece.BlackPawn;
     }
 
         private PositionCommandOptions ParsePositionCommand(string[] tokens)

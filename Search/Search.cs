@@ -15,19 +15,25 @@ namespace ChessBot
     }
 
     // Iterative deepening
-    public Move findBestMove(Board board, int? maxDepth, CancellationToken token)
+    public Move findBestMove(Board board, int? maxDepth, CancellationToken token,
+        IReadOnlyDictionary<ulong, int>? repetitionCounts = null)
     {
       Move bestMove = default;
 
       maxDepth ??= DEFAULT_DEPTH;
 
       Board searchBoard = board.copy();
+      Dictionary<ulong, int> searchRepetitionCounts = repetitionCounts != null
+        ? new Dictionary<ulong, int>(repetitionCounts)
+        : [];
+      EnsurePositionIsCounted(searchRepetitionCounts, board.zobristKey);
+
       for (int depth = 1; depth <= maxDepth; depth++)
       {
         if (token.IsCancellationRequested)
           break;
 
-        Move? move = getNegamaxBestMove(searchBoard, depth, token);
+        Move? move = getNegamaxBestMove(searchBoard, depth, token, searchRepetitionCounts);
 
         if (!token.IsCancellationRequested && move.HasValue)
           bestMove = (Move)move;
@@ -36,12 +42,15 @@ namespace ChessBot
       return bestMove;
     }
 
-    public Move? getNegamaxBestMove(Board board, int depth, CancellationToken token)
+    public Move? getNegamaxBestMove(Board board, int depth, CancellationToken token,
+        Dictionary<ulong, int>? repetitionCounts = null)
     {
       if (token.IsCancellationRequested) return null;
 
       int alpha = -Infinity;
       int beta = Infinity;
+      Dictionary<ulong, int> searchRepetitionCounts = repetitionCounts ?? [];
+      EnsurePositionIsCounted(searchRepetitionCounts, board.zobristKey);
 
       List<Move> moves = MoveGeneration.generateMoves(board); ;
       Move bestMove = default;
@@ -52,7 +61,9 @@ namespace ChessBot
         Board nextBoard = board.copy();
         bool result = nextBoard.makeMove(move);
         if (!result || nextBoard.isInCheck(movingSide)) continue;
-        int? score = -negaMax(nextBoard, -beta, -alpha, depth - 1, token);
+        Dictionary<ulong, int> childRepetitionCounts = EnterPosition(searchRepetitionCounts, nextBoard.zobristKey, move);
+        int? score = -negaMax(nextBoard, -beta, -alpha, depth - 1, 0, token, childRepetitionCounts);
+        LeavePosition(searchRepetitionCounts, nextBoard.zobristKey, move, childRepetitionCounts);
         if (!score.HasValue || token.IsCancellationRequested) return null;
 
         if (score > bestScore)
@@ -66,11 +77,15 @@ namespace ChessBot
       return bestMove;
     }
 
-    private int? negaMax(Board board, int alpha, int beta, int depthLeft, CancellationToken token)
+    private int? negaMax(Board board, int alpha, int beta, int depthLeft, int ply, CancellationToken token,
+        Dictionary<ulong, int> repetitionCounts)
     {
       if (token.IsCancellationRequested) return null;
 
       ulong key = board.zobristKey;
+
+      if (IsThreefoldRepetition(key, repetitionCounts))
+        return 0;
 
       if (transpositionTable.TryGet(key, out TranspositionEntry entry) &&
           entry.depth >= depthLeft)
@@ -104,7 +119,9 @@ namespace ChessBot
         bool result = nextBoard.makeMove(move);
         if (!result || nextBoard.isInCheck(movingSide)) continue;
         hasLegalMove = true;
-        int? score = -negaMax(nextBoard, -beta, -alpha, depthLeft - 1, token);
+        Dictionary<ulong, int> childRepetitionCounts = EnterPosition(repetitionCounts, nextBoard.zobristKey, move);
+        int? score = -negaMax(nextBoard, -beta, -alpha, depthLeft - 1, ply + 1, token, childRepetitionCounts);
+        LeavePosition(repetitionCounts, nextBoard.zobristKey, move, childRepetitionCounts);
         if (!score.HasValue || token.IsCancellationRequested) return null;
 
         if (score > bestScore)
@@ -132,7 +149,7 @@ namespace ChessBot
       }
       if (!hasLegalMove)
         if (isInCheck)
-          bestScore = -MateScore;
+          bestScore = -MateScore + ply;
         else
           bestScore = 0;
 
@@ -151,6 +168,62 @@ namespace ChessBot
       );
 
       return bestScore;
+    }
+
+    private static bool IsThreefoldRepetition(ulong zobristKey, Dictionary<ulong, int> repetitionCounts)
+    {
+      return repetitionCounts.TryGetValue(zobristKey, out int repetitions) && repetitions >= 3;
+    }
+
+    private static Dictionary<ulong, int> EnterPosition(Dictionary<ulong, int> repetitionCounts, ulong zobristKey,
+        Move move)
+    {
+      if (IsIrreversibleMove(move))
+      {
+        Dictionary<ulong, int> resetCounts = [];
+        AddPositionToRepetitionCounts(resetCounts, zobristKey);
+        return resetCounts;
+      }
+
+      AddPositionToRepetitionCounts(repetitionCounts, zobristKey);
+      return repetitionCounts;
+    }
+
+    private static void LeavePosition(Dictionary<ulong, int> parentCounts, ulong zobristKey, Move move,
+        Dictionary<ulong, int> childCounts)
+    {
+      if (!IsIrreversibleMove(move) && ReferenceEquals(parentCounts, childCounts))
+        RemovePositionFromRepetitionCounts(parentCounts, zobristKey);
+    }
+
+    private static void EnsurePositionIsCounted(Dictionary<ulong, int> repetitionCounts, ulong zobristKey)
+    {
+      if (!repetitionCounts.ContainsKey(zobristKey))
+        AddPositionToRepetitionCounts(repetitionCounts, zobristKey);
+    }
+
+    private static void AddPositionToRepetitionCounts(Dictionary<ulong, int> repetitionCounts, ulong zobristKey)
+    {
+      repetitionCounts.TryGetValue(zobristKey, out int count);
+      repetitionCounts[zobristKey] = count + 1;
+    }
+
+    private static void RemovePositionFromRepetitionCounts(Dictionary<ulong, int> repetitionCounts, ulong zobristKey)
+    {
+      if (!repetitionCounts.TryGetValue(zobristKey, out int count))
+        return;
+
+      if (count <= 1)
+        repetitionCounts.Remove(zobristKey);
+      else
+        repetitionCounts[zobristKey] = count - 1;
+    }
+
+    private static bool IsIrreversibleMove(Move move)
+    {
+      return (move.flags & MoveFlags.Capture) != 0 ||
+          move.piece == Piece.WhitePawn ||
+          move.piece == Piece.BlackPawn;
     }
 
     private int? Quiesce(Board board, int alpha, int beta, CancellationToken token)
