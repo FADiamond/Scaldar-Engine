@@ -1,4 +1,3 @@
-using ChessBot.Pieces;
 using ChessBot.ui;
 
 

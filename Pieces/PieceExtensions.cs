@@ -1,4 +1,4 @@
-namespace ChessBot.Pieces
+namespace ChessBot
 {
   public static class PieceExtensions
   {

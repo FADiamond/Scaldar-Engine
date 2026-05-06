@@ -4,16 +4,18 @@ namespace ChessBot
   {
     // All values will be in centipawns
     private const int PawnValue = 100;
-    private const int KnightValue = 350;
-    private const int BishopValue = 350;
-    private const int RookValue = 525;
-    private const int QueenValue = 1000;
+    private const int KnightValue = 320;
+    private const int BishopValue = 330;
+    private const int RookValue = 500;
+    private const int QueenValue = 900;
+    private const int KingValue = 20000;
 
     public static int Evaluate(Board board)
     {
       int currentStateValue = pieceCountEvaluation(board);
+      int piecePositionValue = PieceSquareTableEvaluation(board);
 
-      return currentStateValue;
+      return currentStateValue + piecePositionValue;
     }
 
     public static int EvaluateForSideToMove(Board board)
@@ -24,6 +26,28 @@ namespace ChessBot
         ? whiteRelativeEval
         : -whiteRelativeEval;
 
+    }
+    public static int PieceSquareTableEvaluation(Board board)
+    {
+      int totalValue = 0;
+      for (byte i = 0; i < 64; i++)
+      {
+        Piece? piece = board.getPieceAtSquare(i);
+        if (piece.HasValue)
+        {
+          if (board.sideToMove.Equals(Side.White))
+          {
+            totalValue += PieceSquareTables.GetWhiteRelativeValue(piece.Value, i);
+          }
+          else
+          {
+            totalValue += PieceSquareTables.GetWhiteRelativeValue(piece.Value, i);
+            totalValue = -totalValue;
+          }
+        }
+      }
+
+      return totalValue;
     }
 
     private static int pieceCountEvaluation(Board board)
