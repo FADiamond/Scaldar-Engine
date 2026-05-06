@@ -12,6 +12,8 @@ namespace ChessBot
   // 00 01 02 03 04 05 06 07
   public class Board
   {
+    public ulong zobristKey;
+
     public Side sideToMove;
     public bool whiteCanCastleKingSide;
     public bool whiteCanCastleQueenSide;
@@ -48,6 +50,7 @@ namespace ChessBot
     {
       Board board = new()
       {
+        zobristKey = zobristKey,
         sideToMove = sideToMove,
         whiteCanCastleKingSide = whiteCanCastleKingSide,
         whiteCanCastleQueenSide = whiteCanCastleQueenSide,
@@ -139,6 +142,7 @@ namespace ChessBot
 
       updateClocks(move);
 
+      if (enPassantSquare != null) zobristKey ^= Zobrist.EnPassantSquare[((byte)enPassantSquare.Value) % 16];
       enPassantSquare = null;
 
       bool isPromotion = (move.flags & (MoveFlags.QueenPromotion | MoveFlags.RookPromotion | MoveFlags.BishopPromotion | MoveFlags.KnightPromotion)) != 0;
@@ -146,12 +150,14 @@ namespace ChessBot
       if (isPromotion)
       {
         BitboardHelper.clearBitAtPosition(ref bitboards[(byte)move.piece], move.fromSquare);
+        zobristKey ^= Zobrist.PieceSquare[(byte)move.piece, move.fromSquare];
 
         if ((move.flags & MoveFlags.Capture) != 0)
           removePieceFromSquare(move.toSquare);
 
         Piece promoted = GetPromotedPiece(move);
         bitboards[(byte)promoted] |= BitboardHelper.getBitboardWithBitAt(move.toSquare);
+        zobristKey ^= Zobrist.PieceSquare[(byte)promoted, move.toSquare];
 
       }
       else
@@ -176,6 +182,7 @@ namespace ChessBot
 
 
       updateCastlingRights(move);
+      zobristKey ^= Zobrist.BlackToMove;
       sideToMove = sideToMove.Equals(Side.White) ? Side.Black : Side.White;
 
       return true;
@@ -208,10 +215,12 @@ namespace ChessBot
         if (move.piece.Equals(Piece.WhitePawn))
         {
           enPassantSquare = (EnPassantSquare)(move.toSquare - 8);
+          zobristKey ^= Zobrist.EnPassantSquare[((byte)enPassantSquare.Value) % 16];
         }
         else
         {
           enPassantSquare = (EnPassantSquare)(move.toSquare + 8);
+          zobristKey ^= Zobrist.EnPassantSquare[((byte)enPassantSquare.Value) % 16];
         }
       }
     }
@@ -223,46 +232,13 @@ namespace ChessBot
         if (move.piece.Equals(Piece.WhitePawn))
         {
           bitboards[(byte)Piece.BlackPawn] ^= BitboardHelper.getBitboardWithBitAt((byte)(move.toSquare - 8));
+          zobristKey ^= Zobrist.PieceSquare[(byte)Piece.BlackPawn, (byte)(move.toSquare - 8)];
         }
         else
         {
           bitboards[(byte)Piece.WhitePawn] ^= BitboardHelper.getBitboardWithBitAt((byte)(move.toSquare + 8));
+          zobristKey ^= Zobrist.PieceSquare[(byte)Piece.WhitePawn, (byte)(move.toSquare + 8)];
         }
-      }
-    }
-
-    private void applyPromotionBitboardUpdate(Move move)
-    {
-      if ((move.flags & MoveFlags.QueenPromotion) != 0)
-      {
-        removePieceFromSquare(move.fromSquare);
-        Piece promotedPiece = move.piece.IsWhite() ? Piece.WhiteQueen : Piece.BlackQueen;
-        bitboards[(byte)promotedPiece] ^= BitboardHelper.getBitboardWithBitAt(move.toSquare);
-        removePieceFromSquare(move.toSquare);
-      }
-      else if ((move.flags & MoveFlags.RookPromotion) != 0)
-      {
-        removePieceFromSquare(move.fromSquare);
-        removePieceFromSquare(move.toSquare);
-
-        Piece promotedPiece = move.piece.IsWhite() ? Piece.WhiteRook : Piece.BlackRook;
-        bitboards[(byte)promotedPiece] ^= BitboardHelper.getBitboardWithBitAt(move.toSquare);
-      }
-      else if ((move.flags & MoveFlags.KnightPromotion) != 0)
-      {
-        removePieceFromSquare(move.fromSquare);
-        removePieceFromSquare(move.toSquare);
-
-        Piece promotedPiece = move.piece.IsWhite() ? Piece.WhiteKnight : Piece.BlackKnight;
-        bitboards[(byte)promotedPiece] ^= BitboardHelper.getBitboardWithBitAt(move.toSquare);
-      }
-      else if ((move.flags & MoveFlags.BishopPromotion) != 0)
-      {
-        removePieceFromSquare(move.fromSquare);
-        removePieceFromSquare(move.toSquare);
-
-        Piece promotedPiece = move.piece.IsWhite() ? Piece.WhiteBishop : Piece.BlackBishop;
-        bitboards[(byte)promotedPiece] ^= BitboardHelper.getBitboardWithBitAt(move.toSquare);
       }
     }
 
@@ -284,11 +260,15 @@ namespace ChessBot
       {
         rookMoveBitboard = BitboardHelper.getBitboardWithBitAt((byte)(move.toSquare - 1));
         rookMoveBitboard |= BitboardHelper.getBitboardWithBitAt(kingSideRookSquare);
+        zobristKey ^= Zobrist.PieceSquare[(byte)rook, kingSideRookSquare];
+        zobristKey ^= Zobrist.PieceSquare[(byte)rook, (byte)(move.toSquare - 1)];
       }
       else if ((move.flags & MoveFlags.CastleQueenSide) != 0)
       {
         rookMoveBitboard = BitboardHelper.getBitboardWithBitAt((byte)(move.toSquare + 1));
         rookMoveBitboard |= BitboardHelper.getBitboardWithBitAt(queenSideRookSquare);
+        zobristKey ^= Zobrist.PieceSquare[(byte)rook, queenSideRookSquare];
+        zobristKey ^= Zobrist.PieceSquare[(byte)rook, (byte)(move.toSquare + 1)];
       }
 
       bitboards[(byte)rook] ^= rookMoveBitboard;
@@ -299,6 +279,8 @@ namespace ChessBot
     {
       bitboards[(byte)piece] ^= BitboardHelper.getBitboardWithBitAt(fromSquare);
       bitboards[(byte)piece] ^= BitboardHelper.getBitboardWithBitAt(toSquare);
+      zobristKey ^= Zobrist.PieceSquare[(byte)piece, fromSquare];
+      zobristKey ^= Zobrist.PieceSquare[(byte)piece, toSquare];
     }
 
     private void removePieceFromSquare(byte target)
@@ -308,6 +290,7 @@ namespace ChessBot
         if (BitboardHelper.HasActiveBit(bitboards[i], target))
         {
           BitboardHelper.clearBitAtPosition(ref bitboards[i], target);
+          zobristKey ^= Zobrist.PieceSquare[i, target];
         }
       }
     }
@@ -316,32 +299,68 @@ namespace ChessBot
     {
       if (move.piece.Equals(Piece.WhiteKing))
       {
+        if (whiteCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[0];
+        if (whiteCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[1];
         whiteCanCastleKingSide = false;
         whiteCanCastleQueenSide = false;
       }
       else if (move.piece.Equals(Piece.BlackKing))
       {
+        if (blackCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[2];
+        if (blackCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[3];
         blackCanCastleKingSide = false;
         blackCanCastleQueenSide = false;
       }
 
       if ((move.flags & MoveFlags.Capture) != 0)
       {
-        if (move.toSquare.Equals(63)) blackCanCastleKingSide = false;
-        else if (move.toSquare.Equals(56)) blackCanCastleQueenSide = false;
-        else if (move.toSquare.Equals(7)) whiteCanCastleKingSide = false;
-        else if (move.toSquare.Equals(0)) whiteCanCastleQueenSide = false;
+        if (move.toSquare.Equals(63))
+        {
+          if (blackCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[2];
+          blackCanCastleKingSide = false;
+        }
+        else if (move.toSquare.Equals(56))
+        {
+          if (blackCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[3];
+          blackCanCastleQueenSide = false;
+        }
+        else if (move.toSquare.Equals(7))
+        {
+          if (whiteCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[0];
+          whiteCanCastleKingSide = false;
+        }
+        else if (move.toSquare.Equals(0))
+        {
+          if (whiteCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[1];
+          whiteCanCastleQueenSide = false;
+        }
       }
 
       if (move.piece.Equals(Piece.WhiteRook))
       {
-        if (move.fromSquare.Equals(7)) whiteCanCastleKingSide = false;
-        else if (move.fromSquare.Equals(0)) whiteCanCastleQueenSide = false;
+        if (move.fromSquare.Equals(7))
+        {
+          if (whiteCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[0];
+          whiteCanCastleKingSide = false;
+        }
+        else if (move.fromSquare.Equals(0))
+        {
+          if (whiteCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[1];
+          whiteCanCastleQueenSide = false;
+        }
       }
       else if (move.piece.Equals(Piece.BlackRook))
       {
-        if (move.fromSquare.Equals(63)) blackCanCastleKingSide = false;
-        else if (move.fromSquare.Equals(56)) blackCanCastleQueenSide = false;
+        if (move.fromSquare.Equals(63))
+        {
+          if (blackCanCastleKingSide) zobristKey ^= Zobrist.CastlingRights[2];
+          blackCanCastleKingSide = false;
+        }
+        else if (move.fromSquare.Equals(56))
+        {
+          if (blackCanCastleQueenSide) zobristKey ^= Zobrist.CastlingRights[3];
+          blackCanCastleQueenSide = false;
+        }
       }
     }
 
@@ -394,11 +413,11 @@ namespace ChessBot
       halfMoveClock = byte.Parse(halfmoveClock);
       fullMoveClock = short.Parse(fullmoveNumber);
 
+      zobristKey = Zobrist.computeKey(this);
     }
 
     public void parseFenPiecePlacement(string piecePlacement)
     {
-      Console.WriteLine(piecePlacement);
       byte squareNbr = 0;
       string[] rows = piecePlacement.Split('/');
       for (int i = rows.Length - 1; i >= 0; i--)

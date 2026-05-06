@@ -2,7 +2,7 @@ using ChessBot.ui;
 
 namespace ChessBot
 {
-  public class Attacks
+  public static class Attacks
   {
     public static Dictionary<Piece, ulong[]> PawnAttacks = new()
     {

@@ -2,8 +2,6 @@ namespace ChessBot
 {
   public static class Zobrist
   {
-    public static readonly Prng prng;
-
     public static readonly ulong[,] PieceSquare = new ulong[12, 64];
 
     public static readonly ulong[] CastlingRights = new ulong[4];
@@ -13,7 +11,7 @@ namespace ChessBot
     public static readonly ulong BlackToMove;
 
     static Zobrist() {
-      prng = new Prng();
+      Prng prng = new Prng();
 
       for (int piece = 0; piece < 12; piece++) {
         for (int square = 0; square < 64; square++) {
@@ -31,6 +29,13 @@ namespace ChessBot
 
       BlackToMove = prng.Generate();
 
+    }
+
+    // Temporary fix to see if the key creation in search 
+    // slowed the engine (famous last words)
+    public static void Init() {
+      // Simply forces the constructor to trigger.
+      _ = BlackToMove;
     }
 
     public static ulong computeKey(Board board) {

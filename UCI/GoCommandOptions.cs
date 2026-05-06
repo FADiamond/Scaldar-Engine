@@ -8,6 +8,7 @@ namespace ChessBot
 
     public int? movesToGo;
     public int? depth;
+    public int? perftDepth;
   }
 }
  

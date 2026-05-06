@@ -53,7 +53,7 @@ namespace ChessBot
     private void NewGameReset()
     {
       board = new Board(FenPositions.StartPos);
-      // TODO : Clear transposition table
+      search.ClearTT();
 
     }
 
@@ -62,7 +62,13 @@ namespace ChessBot
       board ??= new Board(FenPositions.StartPos);
       search ??= new Search();
 
-      int? timeBudgetMs = options.timeControl.getTimeBudget(board.sideToMove);
+      if (options.perftDepth.HasValue)
+      {
+        ProcessPerft(options.perftDepth.Value);
+        return;
+      }
+
+      int? timeBudgetMs = options.timeControl.getTimeBudget(board.sideToMove, options.movesToGo);
 
       CancellationTokenSource cts = new();
       CancellationToken timerToken = cts.Token;
@@ -88,8 +94,8 @@ namespace ChessBot
         switch (tokens[i])
         {
           case "perft":
-            int depth = int.Parse(tokens[++i]);
-            ProcessPerft(depth);
+            options.perftDepth = int.Parse(tokens[++i]);
+            i++;
             break;
           case "searchmoves":
             i++;
@@ -213,7 +219,8 @@ namespace ChessBot
 
     private void ProcessPerft(int depth)
     {
-
+      board ??= new Board(FenPositions.StartPos);
+      Perft.Run(board, depth);
     }
 
   }

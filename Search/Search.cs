@@ -21,7 +21,6 @@ namespace ChessBot
 
       maxDepth ??= DEFAULT_DEPTH;
 
-      // TimeControl timeControl = new();
       Board searchBoard = board.copy();
       for (int depth = 1; depth <= maxDepth; depth++)
       {
@@ -71,7 +70,7 @@ namespace ChessBot
     {
       if (token.IsCancellationRequested) return null;
 
-      ulong key = Zobrist.computeKey(board);
+      ulong key = board.zobristKey;
 
       if (transpositionTable.TryGet(key, out TranspositionEntry entry) &&
           entry.depth >= depthLeft)
@@ -92,7 +91,7 @@ namespace ChessBot
 
       bool isInCheck = board.isInCheck(board.sideToMove);
 
-      if (depthLeft <= 0 && !isInCheck) return Quiesce(board, alpha, beta);
+      if (depthLeft <= 0 && !isInCheck) return Quiesce(board, alpha, beta, token);
       Move bestMove = default;
       int bestScore = -Infinity;
       bool hasLegalMove = false;
@@ -110,25 +109,26 @@ namespace ChessBot
 
         if (score > bestScore)
         {
-          bestScore = (int)score;
+          bestScore = score.Value;
           bestMove = move;
         }
+        if (score > alpha)
+          alpha = score.Value;
 
-        if (score >= beta)
+        if (alpha >= beta)
         {
           transpositionTable.Store(
             new TranspositionEntry(
               key,
-              move,
+              bestMove,
               depthLeft,
-              score.Value,
+              bestScore,
               TranspositionFlag.LowerBound
             )
           );
 
-          return score;
+          return bestScore;
         }
-        if (score > alpha) alpha = score.Value;
       }
       if (!hasLegalMove)
         if (isInCheck)
@@ -153,8 +153,10 @@ namespace ChessBot
       return bestScore;
     }
 
-    private int Quiesce(Board board, int alpha, int beta)
+    private int? Quiesce(Board board, int alpha, int beta, CancellationToken token)
     {
+      if (token.IsCancellationRequested) return null;
+
       int staticEval = Evaluation.EvaluateForSideToMove(board);
 
       if (staticEval >= beta)
@@ -166,12 +168,17 @@ namespace ChessBot
       List<Move> moves = MoveGeneration.generateMoves(board); ;
       foreach (Move move in moves)
       {
+        if (token.IsCancellationRequested) return null;
+
         if ((move.flags & MoveFlags.Capture) == 0) continue;
         Side movingSide = board.sideToMove;
         Board nextBoard = board.copy();
         bool result = nextBoard.makeMove(move);
         if (!result || nextBoard.isInCheck(movingSide)) continue;
-        int score = -Quiesce(nextBoard, -beta, -alpha);
+        int? childScore = Quiesce(nextBoard, -beta, -alpha, token);
+        if (!childScore.HasValue || token.IsCancellationRequested) return null;
+
+        int score = -childScore.Value;
 
         if (score >= beta)
           return score;
