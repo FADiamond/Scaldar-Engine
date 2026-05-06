@@ -36,8 +36,8 @@ namespace ChessBot
             NewGameReset();
             break;
           case "position":
-
-            handlePosition();
+            PositionCommandOptions positionOptions = ParsePositionCommand(parts);
+            handlePosition(positionOptions);
             break;
           case "go":
             GoCommandOptions goOptions = ParseGoCommand(parts);
@@ -57,10 +57,6 @@ namespace ChessBot
 
     }
 
-    private void handlePosition()
-    {
-    }
-
     private void handleGoCommand(GoCommandOptions options)
     {
       board ??= new Board(FenPositions.StartPos);
@@ -76,8 +72,6 @@ namespace ChessBot
 
       Move move = search.findBestMove(board, options.depth, timerToken);
       Console.WriteLine("bestmove " + LongAlgebraicConverter.moveToAlgebraic(move));
-      board.makeMove(move);
-
     }
 
     private GoCommandOptions ParseGoCommand(string[] tokens)
@@ -151,7 +145,25 @@ namespace ChessBot
           "depth";
     }
 
-    private PositionCommandOptions ParsePositionCommand(string[] tokens)
+    private void handlePosition(PositionCommandOptions options)
+    {
+      string fen = options.fen ?? FenPositions.StartPos;
+      board = new Board(fen);
+      makeAlgebraicMoves(options.moves);
+
+    }
+
+    private void makeAlgebraicMoves(List<string> algebraicMoves)
+    {
+      foreach (string alebraicMove in algebraicMoves)
+      {
+        Move? move = LongAlgebraicConverter.algebraicToMove(alebraicMove, board);
+        if (move.HasValue)
+          board.makeMove(move.Value);
+      }
+    }
+
+        private PositionCommandOptions ParsePositionCommand(string[] tokens)
     {
       if (tokens.Length < 2 || tokens[0] != "position")
         throw new ArgumentException("Expected a UCI position command with at least 2 tokens.");

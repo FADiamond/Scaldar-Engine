@@ -1,10 +1,10 @@
 namespace ChessBot
 {
-  public static class Prng
+  public class Prng
   {
-    private static ulong rngState = 0x2545F4914F6CDD1D;
+    private ulong rngState = 0x2545F4914F6CDD1D;
 
-    public static ulong Generate()
+    public ulong Generate()
     {
       ulong x = rngState;
       x ^= x << 13;
