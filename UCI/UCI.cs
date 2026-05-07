@@ -82,8 +82,9 @@ namespace ChessBot
       if (timeBudgetMs.HasValue)
         cts.CancelAfter((int)timeBudgetMs);
 
-      Move move = search.findBestMove(board, options.depth, timerToken, repetitionCounts);
-      Console.WriteLine("bestmove " + LongAlgebraicConverter.moveToAlgebraic(move));
+      Move? move = search.findBestMove(board, options.depth, timerToken, repetitionCounts);
+      string bestMove = move.HasValue ? LongAlgebraicConverter.moveToAlgebraic(move.Value) : "0000";
+      Console.WriteLine("bestmove " + bestMove);
     }
 
     private GoCommandOptions ParseGoCommand(string[] tokens)

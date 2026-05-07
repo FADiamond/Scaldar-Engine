@@ -15,14 +15,13 @@ namespace ChessBot
     }
 
     // Iterative deepening
-    public Move findBestMove(Board board, int? maxDepth, CancellationToken token,
+    public Move? findBestMove(Board board, int? maxDepth, CancellationToken token,
         IReadOnlyDictionary<ulong, int>? repetitionCounts = null)
     {
-      Move bestMove = default;
-
       maxDepth ??= DEFAULT_DEPTH;
 
       Board searchBoard = board.copy();
+      Move? bestMove = FindFirstLegalMove(searchBoard);
       Dictionary<ulong, int> searchRepetitionCounts = repetitionCounts != null
         ? new Dictionary<ulong, int>(repetitionCounts)
         : [];
@@ -75,6 +74,22 @@ namespace ChessBot
       }
 
       return bestMove;
+    }
+
+    private static Move? FindFirstLegalMove(Board board)
+    {
+      List<Move> moves = MoveGeneration.generateMoves(board);
+
+      foreach (Move move in moves)
+      {
+        Side movingSide = board.sideToMove;
+        Board nextBoard = board.copy();
+        bool result = nextBoard.makeMove(move);
+        if (result && !nextBoard.isInCheck(movingSide))
+          return move;
+      }
+
+      return null;
     }
 
     private int? negaMax(Board board, int alpha, int beta, int depthLeft, int ply, CancellationToken token,
