@@ -3,11 +3,17 @@ namespace ChessBot
   public class Search
   {
 
+    private readonly MoveOrdering moveOrdering;
+
     private readonly int DEFAULT_DEPTH = 10;
     private const int Infinity = 1000000;
     private const int MateScore = 100000;
 
     public TranspositionTable transpositionTable = new(1 << 20);
+
+    public Search() {
+      moveOrdering = new MoveOrdering();
+    }
 
     public void ClearTT()
     {
@@ -51,8 +57,10 @@ namespace ChessBot
       Dictionary<ulong, int> searchRepetitionCounts = repetitionCounts ?? [];
       EnsurePositionIsCounted(searchRepetitionCounts, board.zobristKey);
 
+      Move? ttMove = null;
       List<Move> moves = MoveGeneration.generateMoves(board); ;
-      Move bestMove = default;
+      moveOrdering.orderMoves(board, moves, ttMove);
+      Move? bestMove = null;
       int bestScore = -Infinity;
       foreach (Move move in moves)
       {
@@ -102,9 +110,12 @@ namespace ChessBot
       if (IsThreefoldRepetition(key, repetitionCounts))
         return 0;
 
+      Move? ttMove = null;
+
       if (transpositionTable.TryGet(key, out TranspositionEntry entry) &&
           entry.depth >= depthLeft)
       {
+        ttMove = entry.bestMove;
         if (entry.flag == TranspositionFlag.Exact)
           return entry.score;
 
@@ -127,6 +138,7 @@ namespace ChessBot
       bool hasLegalMove = false;
 
       List<Move> moves = MoveGeneration.generateMoves(board); ;
+      moveOrdering.orderMoves(board, moves, ttMove);
       foreach (Move move in moves)
       {
         Side movingSide = board.sideToMove;
